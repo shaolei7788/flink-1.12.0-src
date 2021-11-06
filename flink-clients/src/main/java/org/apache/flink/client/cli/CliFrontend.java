@@ -228,15 +228,32 @@ public class CliFrontend {
 		}
 
 		/*TODO 根据之前添加的顺序，挨个判断是否active：Generic、Yarn、Default*/
+		// yarn-per-job = Generic
 		final CustomCommandLine activeCommandLine =
 				validateAndGetActiveCommandLine(checkNotNull(commandLine));
 
 		final ProgramOptions programOptions = ProgramOptions.create(commandLine);
 
 		/*TODO 获取 用户的jar包和其他依赖*/
+		// jobJars : 0 = file:/opt/flink-1.12.2/examples/streaming/SocketWindowWordCount.jar
 		final List<URL> jobJars = getJobJarAndDependencies(programOptions);
-
 		/*TODO 获取有效配置：HA的id、Target（session、per-job）、JobManager内存、TaskManager内存、每个TM的slot数...*/
+		//    effectiveConfiguration =
+		//        confData = {HashMap@3448}  size = 14
+		//        "taskmanager.memory.process.size" -> "1728m"
+		//        "jobmanager.execution.failover-strategy" -> "region"
+		//        "jobmanager.rpc.address" -> "localhost"
+		//        "execution.target" -> "yarn-per-job"
+		//        "jobmanager.memory.process.size" -> "1600m"
+		//        "jobmanager.rpc.port" -> "6123"
+		//        "execution.savepoint.ignore-unclaimed-state" -> {Boolean@3477} false
+		//        "execution.attached" -> {Boolean@3479} true
+		//        "execution.shutdown-on-attached-exit" -> {Boolean@3477} false
+		//        "pipeline.jars" -> {ArrayList@3482}  size = 1
+		//        "parallelism.default" -> "1"
+		//        "taskmanager.numberOfTaskSlots" -> "1"
+		//        "pipeline.classpaths" -> {ArrayList@3488}  size = 0
+		//        "$internal.deployment.config-dir" -> "/opt/flink-1.12.2/conf"
 		final Configuration effectiveConfiguration = getEffectiveConfiguration(
 				activeCommandLine, commandLine, programOptions, jobJars);
 
@@ -246,6 +263,20 @@ public class CliFrontend {
 
 		try {
 			/*TODO 执行程序*/
+			// ------------------------------------------------------
+			//    program = {PackagedProgram@3430}
+			//    jarFile = {URL@3435} "file:/opt/tools/flink-1.12.2/examples/streaming/SocketWindowWordCount.jar"
+			//    args = {String[2]@3436}
+			//    0 = "--port"
+			//    1 = "9999"
+			//    mainClass = {Class@3423} "class org.apache.flink.streaming.examples.socket.SocketWindowWordCount"
+			//    extractedTempLibraries = {Collections$EmptyList@3437}  size = 0
+			//    classpaths = {ArrayList@3438}  size = 0
+			//    userCodeClassLoader = {FlinkUserCodeClassLoaders$SafetyNetWrapperClassLoader@3439}
+			//    savepointSettings = {SavepointRestoreSettings@3440} "SavepointRestoreSettings.none()"
+			//    isPython = false
+
+			// 开始执行程序
 			executeProgram(effectiveConfiguration, program);
 		} finally {
 			program.deleteExtractedLibraries();
@@ -957,20 +988,26 @@ public class CliFrontend {
 	 * @return The return code of the program
 	 */
 	public int parseAndRun(String[] args) {
-
 		// check for action
 		if (args.length < 1) {
 			CliFrontendParser.printHelp(customCommandLines);
 			System.out.println("Please specify an action.");
 			return 1;
 		}
-
-		// get action
+		/**
+		 * // actions
+		 *     private static final String ACTION_RUN = "run";
+		 *     private static final String ACTION_RUN_APPLICATION = "run-application";
+		 *     private static final String ACTION_INFO = "info";
+		 *     private static final String ACTION_LIST = "list";
+		 *     private static final String ACTION_CANCEL = "cancel";
+		 *     private static final String ACTION_STOP = "stop";
+		 *     private static final String ACTION_SAVEPOINT = "savepoint";
+		 */
+		// 获取动作
 		String action = args[0];
-
 		// remove action from parameters
 		final String[] params = Arrays.copyOfRange(args, 1, args.length);
-
 		try {
 			// do action
 			switch (action) {
@@ -1028,7 +1065,27 @@ public class CliFrontend {
 	}
 
 	/**
-	 * Submits the job based on the arguments.
+	 * cd ${FLINK_HOME}
+	 * flink run -t yarn-per-job -c org.apache.flink.streaming.examples.socket.SocketWindowWordCount
+	 *   examples/streaming/SocketWindowWordCount.jar --port 9999
+	 * 发现是通过flink run 指令执行的, 最终的输出:
+	 * ${JAVA_HOME}/bin/java
+	 * -Dlog.file=${FLINK_HOME}/log/flink-sysadmin-client-BoYi-Pro.local.log
+	 * -Dlog4j.configuration=file:${FLINK_HOME}/conf/log4j-cli.properties
+	 * -Dlog4j.configurationFile=file:${FLINK_HOME}/conf/log4j-cli.properties
+	 * -Dlogback.configurationFile=file:${FLINK_HOME}/conf/logback.xml
+	 * -classpath ${FLINK_HOME}/*.jar::/opt/tools/hadoop-3.2.1/etc/hadoop::/opt/tools/hbase-2.0.2/conf
+	 *
+	 * org.apache.flink.client.cli.CliFrontend
+	 * run
+	 * -t yarn-per-job
+	 * -c org.apache.flink.streaming.examples.socket.SocketWindowWordCount
+	 * examples/streaming/SocketWindowWordCount.jar --port 9999
+	 * ————————————————
+	 * 版权声明：本文为CSDN博主「张伯毅」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+	 * 原文链接：https://blog.csdn.net/zhanglong_4444/article/details/114675925
+	 *
+	 * @param args
 	 */
 	public static void main(final String[] args) {
 		EnvironmentInformation.logEnvironmentInfo(LOG, "Command Line Client", args);
@@ -1039,13 +1096,19 @@ public class CliFrontend {
 
 		// 2. load the global configuration
 		/*TODO 根据conf路径，加载配置*/
+		// 2. 加载全局conf配置:
+		//    "parallelism.default" -> "1"
+		//    "jobmanager.execution.failover-strategy" -> "region"
+		//    "jobmanager.rpc.address" -> "localhost"
+		//    "jobmanager.memory.process.size" -> "1600m"
+		//    "jobmanager.rpc.port" -> "6123"
+		//    "taskmanager.memory.process.size" -> "1728m"
+		//    "taskmanager.numberOfTaskSlots" -> "1"
 		final Configuration configuration = GlobalConfiguration.loadConfiguration(configurationDirectory);
 
 		// 3. load the custom command lines
-		/*TODO 封装命令行接口：按顺序Generic、Yarn、Default*/
-		final List<CustomCommandLine> customCommandLines = loadCustomCommandLines(
-			configuration,
-			configurationDirectory);
+		// 构建CliFrontend   : GenericCLI > flinkYarnSessionCLI > DefaultCLI
+		final List<CustomCommandLine> customCommandLines = loadCustomCommandLines(configuration, configurationDirectory);
 
 		try {
 			final CliFrontend cli = new CliFrontend(
@@ -1053,6 +1116,7 @@ public class CliFrontend {
 				customCommandLines);
 
 			SecurityUtils.install(new SecurityConfiguration(cli.configuration));
+			// 使用parseAndRun 提交指令
 			int retCode = SecurityUtils.getInstalledContext()
 					.runSecured(() -> cli.parseAndRun(args));
 			System.exit(retCode);

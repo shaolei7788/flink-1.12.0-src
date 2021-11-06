@@ -215,6 +215,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	@Override
 	public final void onStart() throws Exception {
 		try {
+			// 启动 ResourceManager Service
 			startResourceManagerServices();
 		} catch (Throwable t) {
 			final ResourceManagerException exception = new ResourceManagerException(String.format("Could not start the ResourceManager %s", getAddress()), t);
@@ -223,6 +224,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		}
 	}
 
+	// 启动 Resource Manager
 	private void startResourceManagerServices() throws Exception {
 		try {
 			leaderElectionService = highAvailabilityServices.getResourceManagerLeaderElectionService();
@@ -234,7 +236,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			leaderElectionService.start(this);
 
 			jobLeaderIdService.start(new JobLeaderIdActionsImpl());
-
+			// 注册TaskExecutor Metrics
 			registerTaskExecutorMetrics();
 		} catch (Exception e) {
 			handleStartResourceManagerServicesException(e);
@@ -389,6 +391,10 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			ioExecutor);
 	}
 
+	//todo 向ResouceManager 注册 TaskExecutor
+	//连接taskExecutor
+	//加入缓存
+	//开始注册TaskExecutor == > ResourceManager#registerTaskExecutorInternal
 	@Override
 	public CompletableFuture<RegistrationResponse> registerTaskExecutor(
 			final TaskExecutorRegistration taskExecutorRegistration,
@@ -405,6 +411,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 					if (throwable != null) {
 						return new RegistrationResponse.Decline(throwable.getMessage());
 					} else {
+						//todo 注册 TaskExecutor
 						return registerTaskExecutorInternal(taskExecutorGateway, taskExecutorRegistration);
 					}
 				} else {
@@ -417,10 +424,13 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 
 	@Override
 	public CompletableFuture<Acknowledge> sendSlotReport(ResourceID taskManagerResourceId, InstanceID taskManagerRegistrationId, SlotReport slotReport, Time timeout) {
+		// 获取 worker 的注册信息
 		final WorkerRegistration<WorkerType> workerTypeWorkerRegistration = taskExecutors.get(taskManagerResourceId);
-
 		if (workerTypeWorkerRegistration.getInstanceID().equals(taskManagerRegistrationId)) {
+			// 向 slotManager 注册 slot 信息
+			// SlotManagerImpl#registerTaskManager
 			if (slotManager.registerTaskManager(workerTypeWorkerRegistration, slotReport)) {
+				// 注册完成之后的操作
 				onWorkerRegistered(workerTypeWorkerRegistration.getWorker());
 			}
 			return CompletableFuture.completedFuture(Acknowledge.get());
@@ -794,9 +804,12 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	private RegistrationResponse registerTaskExecutorInternal(
 			TaskExecutorGateway taskExecutorGateway,
 			TaskExecutorRegistration taskExecutorRegistration) {
+		// 获取 taskExecutorResourceId
 		ResourceID taskExecutorResourceId = taskExecutorRegistration.getResourceId();
+		// 移除缓存信息
 		WorkerRegistration<WorkerType> oldRegistration = taskExecutors.remove(taskExecutorResourceId);
 		if (oldRegistration != null) {
+			// 清理注册操作
 			// TODO :: suggest old taskExecutor to stop itself
 			log.debug("Replacing old registration of TaskExecutor {}.", taskExecutorResourceId.getStringWithMetadata());
 
@@ -805,15 +818,17 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 				oldRegistration.getInstanceID(),
 				new ResourceManagerException(String.format("TaskExecutor %s re-connected to the ResourceManager.", taskExecutorResourceId.getStringWithMetadata())));
 		}
-
+		// 获取新的WorkerType
 		final WorkerType newWorker = workerStarted(taskExecutorResourceId);
-
+		// 获取 taskExecutor 地址
 		String taskExecutorAddress = taskExecutorRegistration.getTaskExecutorAddress();
 		if (newWorker == null) {
+			// 如果newWorker为null 抛出异常...
 			log.warn("Discard registration from TaskExecutor {} at ({}) because the framework did " +
 				"not recognize it", taskExecutorResourceId.getStringWithMetadata(), taskExecutorAddress);
 			return new RegistrationResponse.Decline("unrecognized TaskExecutor");
 		} else {
+			// 构造 WorkerRegistration 对象
 			WorkerRegistration<WorkerType> registration = new WorkerRegistration<>(
 				taskExecutorGateway,
 				newWorker,
@@ -823,8 +838,9 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 				taskExecutorRegistration.getMemoryConfiguration());
 
 			log.info("Registering TaskManager with ResourceID {} ({}) at ResourceManager", taskExecutorResourceId.getStringWithMetadata(), taskExecutorAddress);
+			// 加入缓存
 			taskExecutors.put(taskExecutorResourceId, registration);
-
+			// 监控&心跳相关
 			taskManagerHeartbeatManager.monitorTarget(taskExecutorResourceId, new HeartbeatTarget<Void>() {
 				@Override
 				public void receiveHeartbeat(ResourceID resourceID, Void payload) {
@@ -837,7 +853,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 					taskExecutorGateway.heartbeatFromResourceManager(resourceID);
 				}
 			});
-
+			// 反馈注册成功信息
 			return new TaskExecutorRegistrationSuccess(
 				registration.getInstanceID(),
 				resourceId,

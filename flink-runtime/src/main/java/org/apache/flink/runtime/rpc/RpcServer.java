@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface for self gateways.
  */
+//RpcService 和 RpcEndpoint 之间的粘合层
 public interface RpcServer extends StartStoppable, MainThreadExecutable, RpcGateway {
 
 	/**

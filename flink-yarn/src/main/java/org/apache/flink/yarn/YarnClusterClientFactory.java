@@ -56,10 +56,9 @@ public class YarnClusterClientFactory extends AbstractContainerizedClusterClient
 	public YarnClusterDescriptor createClusterDescriptor(Configuration configuration) {
 		checkNotNull(configuration);
 
-		final String configurationDirectory =
-				configuration.get(DeploymentOptionsInternal.CONF_DIR);
+		final String configurationDirectory = configuration.get(DeploymentOptionsInternal.CONF_DIR);
 		YarnLogConfigUtil.setLogConfigFileInConfig(configuration, configurationDirectory);
-
+		//todo 获取集群描述器
 		return getClusterDescriptor(configuration);
 	}
 

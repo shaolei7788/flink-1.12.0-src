@@ -1263,7 +1263,7 @@ public class DataStream<T> {
 
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		SingleOutputStreamOperator<R> returnStream = new SingleOutputStreamOperator(environment, resultTransform);
-
+		//todo 添加
 		getExecutionEnvironment().addOperator(resultTransform);
 
 		return returnStream;

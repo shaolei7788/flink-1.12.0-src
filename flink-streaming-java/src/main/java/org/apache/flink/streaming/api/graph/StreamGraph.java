@@ -77,6 +77,45 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * necessary to build the jobgraph for the execution.
  *
  */
+//Flink 中的执行图可以分成四层： StreamGraph -> JobGraph -> ExecutionGraph -> 物理执行图
+
+/**
+ * StreamGraph：是根据用户通过 Stream API 编写的代码生成的最初的图。用来表示程序的拓扑结构。
+ * JobGraph：StreamGraph 经过优化后生成了 JobGraph，提交给 JobManager 的数据结构。
+ * 		主要的优化为，将多个符合条件的节点 chain 在一起作为一个节点，这样可以减少数据在节点之间流动所需要的序列化/反序列化/传输消耗 。
+ * ExecutionGraph： JobManager 根据 JobGraph 生成 ExecutionGraph。 ExecutionGraph 是JobGraph 的并行化版本，是调度层最核心的数据结构。
+ * 物 理 执 行 图 ： JobManager 根据 ExecutionGraph 对 Job进行调度后 ， 在各个TaskManager上部署 Task 后形成的“图”，并不是一个具体的数据结构
+ *
+ * StreamGraph，JobGraph在Flink客户端生成，然后提交给Flink集群。JobGraph到ExecutionGraph的转换在JobMaster中完成
+ * StreamNode用来代表 operator 的类，并具有所有相关的属性，如并发度、入边和出边等
+ * StreamNode是StreamGraph中的节点，从Transformation转换而来，可以简单理解为一个StreamNode表示一个算子
+ *
+ * StreamEdge：表示连接两个 StreamNode 的边
+ * StreamEdge是StreamGraph中的边，用来连接两个StreamNode，一个StreamNode可以有多个出边，入边，StreamEdge中包含了旁路输出，分区器，字段筛选输出等信息
+ *
+ * JobGraph的生成入口在StreamGraph中，流计算的JobGraph和批处理的JobGraph的生成逻辑不同，对于流而言，使用的是StreamingJobGraphGenerator，对于批而言，使用的是JobGraphGenerator
+ * JobVertex：经过优化后符合条件的多个 StreamNode 可能会 chain 在一起生成一个JobVertex，
+ * 即一个 JobVertex 包含一个或多个 operator， JobVertex 的输入是 JobEdge，输出是IntermediateDataSet
+ *
+ * IntermediateDataSet：中间数据集IntermediateDataSet是一种逻辑结构，用来表示JobVertex的输出，
+ * 即该JobVertex中包含的算子会产生的数据集。不同的执行模式下，其对应的结果分区类型，决定了在执行时刻数据交换的模式
+ * IntermediateDataSet的个数与该JobVertex对应的StreamNode的出边数量相同，可以是一个或者多个
+ * JobEdge： JobEdge是JobGraph中连接IntermediateDataSet和JobVertex的边，表示JobGraph中的一个数据流转通道，其上游数据源是intermediatedataset，下游数据是JobVertex，即数据通过JobEdge由IntermediateDataset传递给目标JobVertex
+   JobEdge中的数据分发模式会直接影响执行时Task之间的数据连接关系，是点对点连接还是全连接
+ ExecutionJobVertex ： 该对象和JobGraph中的JobVertex一一对应。该对象还包含一组ExecutionVertex，数量与该JobVertex中所包含的StreamNode的并行度一致，假设StreamNode的并行度为5，那么该ExecutionJobVertex也会包含5个ExecutionVertex
+ 在ExecutionJobVertex的构造函数中，首先是依据对应的JobVertex的并发度，生成对应个数的ExecutionVertex。其中，一个ExecutionVertex代表一个ExecutionJobVertex的并发子Task。然后是将原来JobVertex的中间结果IntermediateDataSet转化为ExecutionGraph中的IntermediateResult
+
+ Task： Execution 被调度后在分配的 TaskManager 中启动对应的 Task。 Task 包裹了具有用户执行逻辑的 operator。
+
+ ResultPartition：代表由一个 Task 的生成的数据，和 ExecutionGraph 中的IntermediateResultPartition 一一对应。
+
+ ResultSubpartition：是 ResultPartition 的一个子分区。每个 ResultPartition 包含多个ResultSubpartition，其数目要由下游消费 Task 数和 DistributionPattern 来决定。
+
+ InputGate：代表 Task 的输入封装，和 JobGraph 中 JobEdge 一一对应。每个 InputGate消费了一个或多个的 ResultPartition。
+
+ InputChannel：每个 InputGate 会包含一个以上的 InputChannel，和 ExecutionGraph中的 ExecutionEdge 一一对应，也和 ResultSubpartition 一对一地相连，即一个 InputChannel接收一个 ResultSubpartition 的输出
+
+ */
 @Internal
 public class StreamGraph implements Pipeline {
 

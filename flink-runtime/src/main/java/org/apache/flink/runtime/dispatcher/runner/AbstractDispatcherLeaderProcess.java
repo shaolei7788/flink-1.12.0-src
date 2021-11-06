@@ -91,16 +91,19 @@ public abstract class AbstractDispatcherLeaderProcess implements DispatcherLeade
 		}
 	}
 
+	//todo
 	@Override
 	public final void start() {
 		runIfStateIs(
 			State.CREATED,
+			//todo
 			this::startInternal);
 	}
 
 	private void startInternal() {
 		log.info("Start {}.", getClass().getSimpleName());
 		state = State.RUNNING;
+		//todo
 		onStart();
 	}
 

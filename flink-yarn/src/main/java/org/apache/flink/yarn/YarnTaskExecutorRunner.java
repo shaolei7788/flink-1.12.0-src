@@ -43,6 +43,15 @@ import java.util.Map;
 /**
  * This class is the executable entry point for running a TaskExecutor in a YARN container.
  */
+// 是 Flink 的 worker 节点，它负责 Flink 中本机 slot 资源的管理以及具体 task 的执行
+
+/**
+ * 1、启动 TaskExecutor
+ * 2、向ResourceManager注册slot
+ * 3、ResourceManager分配slot
+ * 4、TaskExecutor接收到分配的指令，提供offset给JobMaster（slotpool）
+ * 5、JobMaster提交任务给TaskExecutor去执行
+ */
 public class YarnTaskExecutorRunner {
 
 	protected static final Logger LOG = LoggerFactory.getLogger(YarnTaskExecutorRunner.class);
@@ -66,7 +75,7 @@ public class YarnTaskExecutorRunner {
 		EnvironmentInformation.logEnvironmentInfo(LOG, "YARN TaskExecutor runner", args);
 		SignalHandler.register(LOG);
 		JvmShutdownSafeguard.installAsShutdownHook(LOG);
-
+		//todo 安全运行TaskManager
 		runTaskManagerSecurely(args);
 	}
 
@@ -86,7 +95,7 @@ public class YarnTaskExecutorRunner {
 
 			final Configuration configuration = TaskManagerRunner.loadConfiguration(args);
 			setupAndModifyConfiguration(configuration, currDir, ENV);
-
+			//todo
 			TaskManagerRunner.runTaskManagerSecurely(configuration);
 		}
 		catch (Throwable t) {

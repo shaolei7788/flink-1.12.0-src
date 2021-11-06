@@ -89,9 +89,12 @@ public enum ClientUtils {
 			boolean enforceSingleJobExecution,
 			boolean suppressSysout) throws ProgramInvocationException {
 		checkNotNull(executorServiceLoader);
+		// 获取用户了加载器. : FlinkUserCodeClassLoaders$SafetyNetWrapperClassLoader@3439
 		final ClassLoader userCodeClassLoader = program.getUserCodeClassLoader();
+		// 缓存当前类加载器..
 		final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
+			// 设置类加载器为用户指定的类加载器
 			Thread.currentThread().setContextClassLoader(userCodeClassLoader);
 
 			LOG.info("Starting program (detached: {})", !configuration.getBoolean(DeploymentOptions.ATTACHED));
@@ -104,6 +107,7 @@ public enum ClientUtils {
 				enforceSingleJobExecution,
 				suppressSysout);
 
+			//todo 核心 创建 StreamContextEnvironment 对象
 			StreamContextEnvironment.setAsContext(
 				executorServiceLoader,
 				configuration,
@@ -112,6 +116,7 @@ public enum ClientUtils {
 				suppressSysout);
 
 			try {
+				// 通过反射的方式, 调用用户程序的mian方法
 				program.invokeInteractiveModeForExecution();
 			} finally {
 				ContextEnvironment.unsetAsContext();

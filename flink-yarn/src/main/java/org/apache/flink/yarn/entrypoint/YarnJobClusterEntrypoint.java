@@ -37,6 +37,25 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
+ * $JAVA_HOME/bin/java
+ * -Xmx1073741824
+ * -Xms1073741824
+ * -XX:MaxMetaspaceSize=268435456
+ * -Dlog.file="<LOG_DIR>/jobmanager.log"
+ * -Dlog4j.configuration=file:log4j.properties
+ * -Dlog4j.configurationFile=file:log4j.properties
+ *
+ * org.apache.flink.yarn.entrypoint.YarnJobClusterEntrypoint
+ *
+ * -D jobmanager.memory.off-heap.size=134217728b
+ * -D jobmanager.memory.jvm-overhead.min=201326592b
+ * -D jobmanager.memory.jvm-metaspace.size=268435456b
+ * -D jobmanager.memory.heap.size=1073741824b
+ * -D jobmanager.memory.jvm-overhead.max=201326592b 1> <LOG_DIR>/jobmanager.out 2> <LOG_DIR>/jobmanager.err
+ */
+
+
+/**
  * Entry point for Yarn per-job clusters.
  */
 public class YarnJobClusterEntrypoint extends JobClusterEntrypoint {
@@ -52,7 +71,9 @@ public class YarnJobClusterEntrypoint extends JobClusterEntrypoint {
 
 	@Override
 	protected DefaultDispatcherResourceManagerComponentFactory createDispatcherResourceManagerComponentFactory(Configuration configuration) throws IOException {
+		//todo
 		return DefaultDispatcherResourceManagerComponentFactory.createJobComponentFactory(
+			//YarnResourceManagerFactory
 			YarnResourceManagerFactory.getInstance(),
 			FileJobGraphRetriever.createFrom(
 					configuration,
@@ -88,10 +109,11 @@ public class YarnJobClusterEntrypoint extends JobClusterEntrypoint {
 			args,
 			new DynamicParametersConfigurationParserFactory(),
 			YarnJobClusterEntrypoint.class);
+		// 1.构建配置
 		final Configuration configuration = YarnEntrypointUtils.loadConfiguration(workingDirectory, dynamicParameters, env);
-
+		// 2.构建YarnJobClusterEntrypoint
 		YarnJobClusterEntrypoint yarnJobClusterEntrypoint = new YarnJobClusterEntrypoint(configuration);
-
+		// 3.启动
 		ClusterEntrypoint.runClusterEntrypoint(yarnJobClusterEntrypoint);
 	}
 }

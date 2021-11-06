@@ -73,10 +73,11 @@ public class StreamContextEnvironment extends StreamExecutionEnvironment {
 
 	@Override
 	public JobExecutionResult execute(StreamGraph streamGraph) throws Exception {
+		//执行异步提交
 		final JobClient jobClient = executeAsync(streamGraph);
 		final List<JobListener> jobListeners = getJobListeners();
-
 		try {
+			//异步提交结果
 			final JobExecutionResult  jobExecutionResult = getJobExecutionResult(jobClient);
 			jobListeners.forEach(jobListener ->
 					jobListener.onJobExecuted(jobExecutionResult, null));

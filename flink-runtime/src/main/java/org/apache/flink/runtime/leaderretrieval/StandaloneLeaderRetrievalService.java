@@ -80,8 +80,8 @@ public class StandaloneLeaderRetrievalService implements LeaderRetrievalService 
 		synchronized (startStopLock) {
 			checkState(!started, "StandaloneLeaderRetrievalService can only be started once.");
 			started = true;
-
 			// directly notify the listener, because we already know the leading JobManager's address
+			//todo
 			listener.notifyLeaderAddress(leaderAddress, leaderId);
 		}
 	}

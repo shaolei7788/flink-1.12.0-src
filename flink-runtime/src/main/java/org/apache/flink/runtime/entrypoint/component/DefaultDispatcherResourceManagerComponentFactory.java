@@ -93,8 +93,11 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			@Nonnull DispatcherRunnerFactory dispatcherRunnerFactory,
 			@Nonnull ResourceManagerFactory<?> resourceManagerFactory,
 			@Nonnull RestEndpointFactory<?> restEndpointFactory) {
+		//DefaultDispatcherRunnerFactory
 		this.dispatcherRunnerFactory = dispatcherRunnerFactory;
+		//YarnResourceManagerFactory
 		this.resourceManagerFactory = resourceManagerFactory;
+		//JobRestEndpointFactory
 		this.restEndpointFactory = restEndpointFactory;
 	}
 
@@ -118,27 +121,28 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 		DispatcherRunner dispatcherRunner = null;
 
 		try {
+			// Dispatcher 高可用相关
 			dispatcherLeaderRetrievalService = highAvailabilityServices.getDispatcherLeaderRetriever();
-
+			// ResourceManager 高可用相关
 			resourceManagerRetrievalService = highAvailabilityServices.getResourceManagerLeaderRetriever();
-
+			// Dispatcher 网关相关
 			final LeaderGatewayRetriever<DispatcherGateway> dispatcherGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				DispatcherGateway.class,
 				DispatcherId::fromUuid,
 				new ExponentialBackoffRetryStrategy(12, Duration.ofMillis(10), Duration.ofMillis(50)));
-
+			// ResourceManager 网关相关
 			final LeaderGatewayRetriever<ResourceManagerGateway> resourceManagerGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				ResourceManagerGateway.class,
 				ResourceManagerId::fromUuid,
 				new ExponentialBackoffRetryStrategy(12, Duration.ofMillis(10), Duration.ofMillis(50)));
-
+			// 构建  Executor
 			final ScheduledExecutorService executor = WebMonitorEndpoint.createExecutorService(
 				configuration.getInteger(RestOptions.SERVER_NUM_THREADS),
 				configuration.getInteger(RestOptions.SERVER_THREAD_PRIORITY),
 				"DispatcherRestEndpoint");
-
+			// 10000L
 			final long updateInterval = configuration.getLong(MetricOptions.METRIC_FETCHER_UPDATE_INTERVAL);
 			final MetricFetcher metricFetcher = updateInterval == 0
 				? VoidMetricFetcher.INSTANCE
@@ -147,7 +151,10 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 					metricQueryServiceRetriever,
 					dispatcherGatewayRetriever,
 					executor);
-
+			//todo WEB UI 相关服务
+			// 里面维护了很多很多的Handler，如果客户端通过 flink run 的方式来提交一个 job 到 flink
+			// 集群，最终，是由 WebMonitorEndpoint 来接收，并且决定使用哪一个 Handler 来执行处理
+			// submitJob ===> SubmitJobHandler
 			webMonitorEndpoint = restEndpointFactory.createRestEndpoint(
 				configuration,
 				dispatcherGatewayRetriever,
@@ -176,7 +183,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 				metricRegistry,
 				hostname,
 				ioExecutor);
-
+			// 获取 history server 相关
 			final HistoryServerArchivist historyServerArchivist = HistoryServerArchivist.createHistoryServerArchivist(configuration, webMonitorEndpoint, ioExecutor);
 
 			final PartialDispatcherServices partialDispatcherServices = new PartialDispatcherServices(
@@ -195,6 +202,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			log.debug("Starting Dispatcher.");
 			/*TODO 创建和启动 Dispatcher => dispatcher会创建和启动JobMaster*/
 			dispatcherRunner = dispatcherRunnerFactory.createDispatcherRunner(
+				// DefaultLeaderElectionService LeaderElectionService
 				highAvailabilityServices.getDispatcherLeaderElectionService(),
 				fatalErrorHandler,
 				new HaServicesJobGraphStoreFactory(highAvailabilityServices),
@@ -270,11 +278,16 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 	}
 
 	public static DefaultDispatcherResourceManagerComponentFactory createJobComponentFactory(
+			//YarnResourceManagerFactory
 			ResourceManagerFactory<?> resourceManagerFactory,
 			JobGraphRetriever jobGraphRetriever) {
+		//todo
 		return new DefaultDispatcherResourceManagerComponentFactory(
+			//DefaultDispatcherRunnerFactory
 			DefaultDispatcherRunnerFactory.createJobRunner(jobGraphRetriever),
+			//YarnResourceManagerFactory
 			resourceManagerFactory,
+			//JobRestEndpointFactory
 			JobRestEndpointFactory.INSTANCE);
 	}
 }

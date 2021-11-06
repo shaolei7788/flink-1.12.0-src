@@ -226,6 +226,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 
 	private void startDispatcherServices() throws Exception {
 		try {
+			//注册Dispatcher性能监控相关
 			registerDispatcherMetrics(jobManagerMetricGroup);
 		} catch (Exception e) {
 			handleStartDispatcherServicesException(e);
@@ -233,7 +234,9 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	}
 
 	private void startRecoveredJobs() {
+		// 处理需要恢复的Job
 		for (JobGraph recoveredJob : recoveredJobs) {
+			// 处理恢复的Job
 			runRecoveredJob(recoveredJob);
 		}
 		recoveredJobs.clear();
@@ -242,6 +245,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	private void runRecoveredJob(final JobGraph recoveredJob) {
 		checkNotNull(recoveredJob);
 		try {
+			//todo
 			runJob(recoveredJob, ExecutionType.RECOVERY);
 		} catch (Throwable throwable) {
 			onFatalError(new DispatcherException(String.format("Could not start recovered job %s.", recoveredJob.getJobID()), throwable));
@@ -380,6 +384,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	private void runJob(JobGraph jobGraph, ExecutionType executionType) {
 		Preconditions.checkState(!runningJobs.containsKey(jobGraph.getJobID()));
 		long initializationTimestamp = System.currentTimeMillis();
+		//todo 构建 JobManagerRunner  也就是 JobMaster
 		CompletableFuture<JobManagerRunner> jobManagerRunnerFuture = createJobManagerRunner(jobGraph, initializationTimestamp);
 
 		DispatcherJob dispatcherJob = DispatcherJob.createFor(
@@ -387,6 +392,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 				jobGraph.getJobID(),
 				jobGraph.getName(),
 				initializationTimestamp);
+		// 将Job加入队列
 		runningJobs.put(jobGraph.getJobID(), dispatcherJob);
 
 		final JobID jobId = jobGraph.getJobID();
@@ -450,6 +456,8 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 			() -> {
 				try {
 					/*TODO 创建JobMaster */
+					// DefaultJobManagerRunnerFactory#createJobManagerRunner
+					// runner = JobManagerRunnerImpl
 					JobManagerRunner runner = jobManagerRunnerFactory.createJobManagerRunner(
 						jobGraph,
 						configuration,

@@ -51,7 +51,7 @@ public class JobDispatcherLeaderProcess extends AbstractDispatcherLeaderProcess 
 			DispatcherId.fromUuid(getLeaderSessionId()),
 			Collections.singleton(jobGraph),
 			ThrowingJobGraphWriter.INSTANCE);
-
+		//todo
 		completeDispatcherSetup(dispatcherService);
 	}
 }

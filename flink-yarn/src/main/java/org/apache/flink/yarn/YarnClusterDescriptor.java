@@ -444,15 +444,18 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 	}
 
+
 	@Override
 	public ClusterClientProvider<ApplicationId> deployJobCluster(
 		ClusterSpecification clusterSpecification,
 		JobGraph jobGraph,
 		boolean detached) throws ClusterDeploymentException {
 		try {
+			//todo 开始部署 yarn   per-job cluster
 			return deployInternal(
 				clusterSpecification,
 				"Flink per-job cluster",
+				//TODO 这是yarn集群入口的名字  YarnJobClusterEntrypoint.class AM执行的入口类
 				getYarnJobClusterEntrypoint(),
 				jobGraph,
 				detached);
@@ -493,7 +496,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 			String yarnClusterEntrypoint,
 			@Nullable JobGraph jobGraph,
 			boolean detached) throws Exception {
-
+		// 配置信息相关
 		final UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
 		if (HadoopUtils.isKerberosSecurityEnabled(currentUser)) {
 			boolean useTicketCache = flinkConfiguration.getBoolean(SecurityOptions.KERBEROS_LOGIN_USETICKETCACHE);
@@ -503,12 +506,11 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 					"does not have Kerberos credentials or delegation tokens!");
 			}
 		}
-
 		/*TODO 部署前检查：jar包路径、conf路径、yarn最大核数....*/
+		// 开启一系列检测, 是否有足够的资源启动集群 (jar ,  conf , yarn core)
 		isReadyForDeployment(clusterSpecification);
 
 		// ------------------ Check if the specified queue exists --------------------
-
 		/*TODO 检查指定的yarn队列是否存在*/
 		checkYarnQueues(yarnClient);
 
@@ -516,22 +518,51 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		/*TODO 检查yarn是否有足够的资源*/
 
 		// Create application via yarnClient
+		// 构建 application 的 客户端
 		final YarnClientApplication yarnApplication = yarnClient.createApplication();
+		// 获取响应信息.
+		//    application_id {
+		//        id: 10
+		//        cluster_timestamp: 1615446205104
+		//    }
+		//    maximumCapability {
+		//        memory: 8192
+		//        virtual_cores: 4
+		//        resource_value_map {
+		//            key: "memory-mb"
+		//            value: 8192
+		//            units: "Mi"
+		//            type: COUNTABLE
+		//        }
+		//        resource_value_map {
+		//            key: "vcores"
+		//            value: 4
+		//            units: ""
+		//            type: COUNTABLE
+		//        }
+		//    }
 		final GetNewApplicationResponse appResponse = yarnApplication.getNewApplicationResponse();
-
+		// 获取yarn集群资源的最大值...
+		// <memory:8192, vCores:4>
 		Resource maxRes = appResponse.getMaximumResourceCapability();
 
 		final ClusterResourceDescription freeClusterMem;
 		try {
+			// 获取空间内存大小....
+			// freeClusterMem :
+			//    totalFreeMemory = 104857600
+			//    containerLimit = 104857600
+			//    nodeManagersFree = {int[1]@4603}
 			freeClusterMem = getCurrentFreeClusterResources(yarnClient);
 		} catch (YarnException | IOException e) {
 			failSessionDuringDeployment(yarnClient, yarnApplication);
 			throw new YarnDeploymentException("Could not retrieve information about free cluster resources.", e);
 		}
-
+		// 获取yarn最小分配的内存大小, 默认 1024MB
 		final int yarnMinAllocationMB = yarnConfiguration.getInt(
 				YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
 				YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB);
+		// 如果最小分配的内存资源 < 0 , 抛出异常
 		if (yarnMinAllocationMB <= 0) {
 			throw new YarnDeploymentException("The minimum allocation memory "
 					+ "(" + yarnMinAllocationMB + " MB) configured via '" + YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB
@@ -540,6 +571,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
 		final ClusterSpecification validClusterSpecification;
 		try {
+			// 开启验证, 验证资源是否满足需求
 			validClusterSpecification = validateClusterResources(
 					clusterSpecification,
 					yarnMinAllocationMB,
@@ -551,14 +583,16 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		LOG.info("Cluster specification: {}", validClusterSpecification);
-
+        // 开始获取设定的启动模式... : NORMAL
+		// detached 分离模式，即客户端就可以退出了
+		// NORMAL 客户端保持连接，占用命令行，不退出
 		final ClusterEntrypoint.ExecutionMode executionMode = detached ?
 				ClusterEntrypoint.ExecutionMode.DETACHED
 				: ClusterEntrypoint.ExecutionMode.NORMAL;
-
+		// 设置启动模式 : internal.cluster.execution-mode
 		flinkConfiguration.setString(ClusterEntrypoint.EXECUTION_MODE, executionMode.toString());
 
-		/*TODO 开始启动AM*/
+		//todo 开始启动AppMaster, 获取响应信息
 		ApplicationReport report = startAppMaster(
 				flinkConfiguration,
 				applicationName,
@@ -569,15 +603,18 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 				validClusterSpecification);
 
 		// print the application id for user to cancel themselves.
+		// 输出application id, 主要用去取消任务...
+		// detached 分离模式，即客户端就可以退出了
 		if (detached) {
 			final ApplicationId yarnApplicationId = report.getApplicationId();
 			logDetachedClusterInformation(yarnApplicationId, LOG);
 		}
-
+		// 设置集群配置
 		setClusterEntrypointInfoToConfig(report);
 
 		return () -> {
 			try {
+				// 构建反馈的集群客户端
 				return new RestClusterClient<>(flinkConfiguration, report.getApplicationId());
 			} catch (Exception e) {
 				throw new RuntimeException("Error while creating RestClusterClient.", e);
@@ -696,10 +733,11 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		org.apache.flink.core.fs.FileSystem.initialize(
 				configuration,
 				PluginUtils.createPluginManagerFromRootFolder(configuration));
-
+        // 获取文件系统: LocalFileSystem
 		final FileSystem fs = FileSystem.get(yarnConfiguration);
 
 		// hard coded check for the GoogleHDFS client because its not overriding the getScheme() method.
+		// 硬编码检查GoogleHadoopFileSystem, 因为他没有复写getScheme 方法
 		if (!fs.getClass().getSimpleName().equals("GoogleHadoopFileSystem") &&
 				fs.getScheme().startsWith("file")) {
 			LOG.warn("The file system scheme is '" + fs.getScheme() + "'. This indicates that the "
@@ -708,14 +746,30 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		ApplicationSubmissionContext appContext = yarnApplication.getApplicationSubmissionContext();
-
+        //  / jar
 		final List<Path> providedLibDirs = Utils.getQualifiedRemoteSharedPaths(configuration, yarnConfiguration);
 
 		/*TODO Yarn应用的文件上传器：FS、对应的HDFS路径
 		* 	   用来上传：用户jar包、flink的依赖、flink的配置文件（接下来接近300行，不用看）
 		* 	   直接跳到 fileUploader.close()
 		* */
-
+		// 文件上传工具
+		//    fileSystem = {LocalFileSystem@5001}
+		//    applicationId = {ApplicationIdPBImpl@5007} "application_1615446205104_0010"
+		//    homeDir = {Path@5067} "file:/Users/sysadmin"
+		//    applicationDir = {Path@5068} "file:/Users/sysadmin/.flink/application_1615446205104_0010"
+		//    providedSharedLibs = {Collections$UnmodifiableMap@5069}  size = 0
+		//    localResources = {HashMap@5070}  size = 2
+		//           "log4j.properties" -> {LocalResourcePBImpl@5080} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0010/log4j.properties" } size: 2620 timestamp: 1615717946000 type: FILE visibility: APPLICATION"
+		//           "SocketWindowWordCount.jar" -> {LocalResourcePBImpl@5082} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0010/SocketWindowWordCount.jar" } size: 14708 timestamp: 1615717946000 type: FILE visibility: APPLICATION"
+		//    fileReplication = 3
+		//    remotePaths = {ArrayList@5071}  size = 2
+		//           0 = {Path@5086} "file:/opt/tools/flink-1.12.2/conf/log4j.properties"
+		//           1 = {Path@5087} "file:/opt/tools/flink-1.12.2/examples/streaming/SocketWindowWordCount.jar"
+		//    envShipResourceList = {ArrayList@5072}  size = 2
+		//           0 = {YarnLocalResourceDescriptor@5091} "YarnLocalResourceDescriptor{key=log4j.properties, path=file:/Users/sysadmin/.flink/application_1615446205104_0010/log4j.properties, size=2620, modificationTime=1615717946000, visibility=APPLICATION, type=FILE}"
+		//           1 = {YarnLocalResourceDescriptor@5092} "YarnLocalResourceDescriptor{key=SocketWindowWordCount.jar, path=file:/Users/sysadmin/.flink/application_1615446205104_0010/SocketWindowWordCount.jar, size=14708, modificationTime=1615717946000, visibility=APPLICATION, type=FILE}"
+		//    flinkDist = null
 		final YarnApplicationFileUploader fileUploader = YarnApplicationFileUploader.from(
 			fs,
 			getStagingDir(fs),
@@ -724,18 +778,19 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 			getFileReplication());
 
 		// The files need to be shipped and added to classpath.
+		// /opt/tools/flink-1.12.2/conf/log4j.properties
 		Set<File> systemShipFiles = new HashSet<>(shipFiles.size());
 		for (File file : shipFiles) {
 			systemShipFiles.add(file.getAbsoluteFile());
 		}
-
+        // 获取日志配置目录
 		final String logConfigFilePath = configuration.getString(YarnConfigOptionsInternal.APPLICATION_LOG_CONFIG_FILE);
 		if (logConfigFilePath != null) {
 			systemShipFiles.add(new File(logConfigFilePath));
 		}
 
 		// Set-up ApplicationSubmissionContext for the application
-
+		// 获取 ApplicationId : application_1615446205104_0010
 		final ApplicationId appId = appContext.getApplicationId();
 
 		// ------------------ Add Zookeeper namespace to local flinkConfiguraton ------
@@ -752,6 +807,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		/*TODO 高可用配置：重试次数，默认2次*/
 		if (HighAvailabilityMode.isHighAvailabilityModeActivated(configuration)) {
 			// activate re-execution of failed applications
+			// 是否高可用 :  做大重试次数 :  yarn.application-attempts =>  2
 			appContext.setMaxAppAttempts(
 					configuration.getInteger(
 							YarnConfigOptions.APPLICATION_ATTEMPTS.key(),
@@ -759,6 +815,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
 			activateHighAvailabilitySupport(appContext);
 		} else {
+			// 设置重试次数为 1
 			// set number of application retries to 1 in the default case
 			appContext.setMaxAppAttempts(
 					configuration.getInteger(
@@ -767,6 +824,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		/*TODO 添加用户jar包*/
+		// 0 : file:/opt/tools/flink-1.12.2/examples/streaming/SocketWindowWordCount.jar
 		final Set<Path> userJarFiles = new HashSet<>();
 		if (jobGraph != null) {
 			userJarFiles.addAll(jobGraph.getUserJars().stream().map(f -> f.toUri()).map(Path::new).collect(Collectors.toSet()));
@@ -824,6 +882,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		// Upload and register user jars
+		// 上传&注册用户jar : SocketWindowWordCount.jar
 		final List<String> userClassPaths = fileUploader.registerMultipleLocalResources(
 			userJarFiles,
 			userJarInclusion == YarnConfigOptions.UserJarInclusion.DISABLED
@@ -919,6 +978,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		//In Integration test setup, the Yarn containers created by YarnMiniCluster does not have the Yarn site XML
 		//and KRB5 configuration files. We are adding these files as container local resources for the container
 		//applications (JM/TMs) to have proper secure cluster setup
+		// 权限相关的验证.....
 		Path remoteYarnSiteXmlPath = null;
 		if (System.getenv("IN_TESTS") != null) {
 			File f = new File(System.getenv("YARN_CONF_DIR"), Utils.YARN_SITE_FILE_NAME);
@@ -935,7 +995,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 				configuration.set(SecurityOptions.KERBEROS_KRB5_PATH, System.getProperty("java.security.krb5.conf"));
 			}
 		}
-
+        // kerberos 验证
 		Path remoteKrb5Path = null;
 		boolean hasKrb5 = false;
 		String krb5Config = configuration.get(SecurityOptions.KERBEROS_KRB5_PATH);
@@ -995,25 +1055,53 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		amContainer.setLocalResources(fileUploader.getRegisteredLocalResources());
+		// 上传完成,关闭连接...
 		fileUploader.close();
 
 		// Setup CLASSPATH and environment variables for ApplicationMaster
 		/*TODO 创建Map，用来存储 AM的环境变量和类路径*/
 		final Map<String, String> appMasterEnv = new HashMap<>();
 		// set user specified app master environment variables
+		// 设置用户指定的环境变量
 		appMasterEnv.putAll(
 			ConfigurationUtils.getPrefixedKeyValuePairs(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX, configuration));
 		// set Flink app class path
 		appMasterEnv.put(YarnConfigKeys.ENV_FLINK_CLASSPATH, classPathBuilder.toString());
-
+		// 设置Flink的路径
+		// set Flink app class path : _FLINK_CLASSPATH -> :
+		// SocketWindowWordCount.jar:flink-dist_2.11-1.12.2.jar:job.graph:flink-conf.yaml:
 		// set Flink on YARN internal configuration values
 		appMasterEnv.put(YarnConfigKeys.FLINK_DIST_JAR, localResourceDescFlinkJar.toString());
 		appMasterEnv.put(YarnConfigKeys.ENV_APP_ID, appId.toString());
 		appMasterEnv.put(YarnConfigKeys.ENV_CLIENT_HOME_DIR, fileUploader.getHomeDir().toString());
+//    _CLIENT_SHIP_FILES -> YarnLocalResourceDescriptor{
+		//        key=log4j.properties,
+		//                path=file:/Users/sysadmin/.flink/application_1615446205104_0011/log4j.properties, size=2620,
+		//                modificationTime=1615718651000,
+		//                visibility=APPLICATION,
+		//                type=FILE
+		//    };
+		//
+		//    YarnLocalResourceDescriptor{
+		//        key=SocketWindowWordCount.jar,
+		//                path=file:/Users/sysadmin/.flink/application_1615446205104_0011/SocketWindowWordCount.jar,
+		//                size=14708,
+		//                modificationTime=1615718656000,
+		//                visibility=APPLICATION,
+		//                type=FILE
+		//    };
+		//    YarnLocalResourceDescriptor{
+		//        key=flink-conf.yaml,
+		//                path=file:/Users/sysadmin/.flink/application_1615446205104_0011/application_1615446205104_0011-flink-conf.yaml3338435768180930238.tmp,
+		//                size=775,
+		//                modificationTime=1615718773000,
+		//                visibility=APPLICATION, type=FILE
+		//    }
 		appMasterEnv.put(YarnConfigKeys.ENV_CLIENT_SHIP_FILES, encodeYarnLocalResourceDescriptorListToString(fileUploader.getEnvShipResourceList()));
 		appMasterEnv.put(YarnConfigKeys.ENV_ZOOKEEPER_NAMESPACE, getZookeeperNamespace());
+		// _FLINK_YARN_FILES -> file:/Users/sysadmin/.flink/application_1615446205104_0011
 		appMasterEnv.put(YarnConfigKeys.FLINK_YARN_FILES, fileUploader.getApplicationDir().toUri().toString());
-
+		// HADOOP_USER_NAME -> sysadmin
 		// https://github.com/apache/hadoop/blob/trunk/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-site/src/site/markdown/YarnApplicationSecurity.md#identity-on-an-insecure-cluster-hadoop_user_name
 		appMasterEnv.put(YarnConfigKeys.ENV_HADOOP_USER_NAME, UserGroupInformation.getCurrentUser().getUserName());
 
@@ -1035,16 +1123,33 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		// set classpath from YARN configuration
+		// set classpath from YARN configuration
+		//
+		//    "_APP_ID" -> "application_1615446205104_0011"
+		//    "_FLINK_YARN_FILES" -> "file:/Users/sysadmin/.flink/application_1615446205104_0011"
+		//    "HADOOP_USER_NAME" -> "sysadmin"
+		//    "_FLINK_CLASSPATH" -> ":SocketWindowWordCount.jar:flink-dist_2.11-1.12.2.jar:job.graph:flink-conf.yaml:"
+		//    "_CLIENT_SHIP_FILES" -> "YarnLocalResourceDescriptor{key=log4j.properties, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/log4j.properties, size=2620, modificationTime=1615718651000, visibility=APPLICATION, type=FILE};YarnLocalResourceDescriptor{key=SocketWindowWordCount.jar, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/SocketWindowWordCount.jar, size=14708, modificationTime=1615718656000, visibility=APPLICATION, type=FILE};YarnLocalResourceDescriptor{key=flink-conf.yaml, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/application_1615446205104_0011-flink-conf.yaml3338435768180930238.tmp, size=775, modificationTime=1615718773000, visibility=APPLICATION, type=FILE}"
+		//    "_FLINK_DIST_JAR" -> "YarnLocalResourceDescriptor{key=flink-dist_2.11-1.12.2.jar, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/flink-dist_2.11-1.12.2.jar, size=114224188, modificationTime=1615718665000, visibility=APPLICATION, type=FILE}"
+		//    "_CLIENT_HOME_DIR" -> "file:/Users/sysadmin"
+		//    "CLASSPATH" -> ":SocketWindowWordCount.jar:flink-dist_2.11-1.12.2.jar:job.graph:flink-conf.yaml::$HADOOP_CONF_DIR:$HADOOP_COMMON_HOME/share/hadoop/common/*:$HADOOP_COMMON_HOME/share/hadoop/common/lib/*:$HADOOP_HDFS_HOME/share/hadoop/hdfs/*:$HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/*:$HADOOP_YARN_HOME/share/hadoop/yarn/*:$HADOOP_YARN_HOME/share/hadoop/yarn/lib/*"
+		//
 		Utils.setupYarnClassPath(yarnConfiguration, appMasterEnv);
 
 		/*TODO 将之前封装的 Map（AM的环境信息、类路径），设置到容器里*/
 		amContainer.setEnvironment(appMasterEnv);
 
 		// Set up resource type requirements for ApplicationMaster
+		//    proto = {YarnProtos$ResourceProto@5995} "memory: 1600\nvirtual_cores: 1\nresource_value_map {\n  key: "memory-mb"\n  value: 1600\n  units: "Mi"\n  type: COUNTABLE\n}\nresource_value_map {\n  key: "vcores"\n  value: 1\n  units: ""\n  type: COUNTABLE\n}\n"
+		//    builder = {YarnProtos$ResourceProto$Builder@5996}
+		//    viaProto = true
+		//    resources = {ResourceInformation[2]@5997}
+		//    0 = {ResourceInformation@6009} "name: memory-mb, units: Mi, type: COUNTABLE, value: 1600, minimum allocation: 0, maximum allocation: 9223372036854775807"
+		//    1 = {ResourceInformation@6010} "name: vcores, units: , type: COUNTABLE, value: 1, minimum allocation: 0, maximum allocation: 9223372036854775807"
 		Resource capability = Records.newRecord(Resource.class);
 		capability.setMemory(clusterSpecification.getMasterMemoryMB());
 		capability.setVirtualCores(flinkConfiguration.getInteger(YarnConfigOptions.APP_MASTER_VCORES));
-
+        // Flink per-job cluster
 		final String customApplicationName = customName != null ? customName : applicationName;
 
 		appContext.setApplicationName(customApplicationName);
@@ -1060,6 +1165,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		if (yarnQueue != null) {
+			//设置队列
 			appContext.setQueue(yarnQueue);
 		}
 
@@ -1071,8 +1177,35 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		Thread deploymentFailureHook = new DeploymentFailureHook(yarnApplication, fileUploader.getApplicationDir());
 		Runtime.getRuntime().addShutdownHook(deploymentFailureHook);
 		LOG.info("Submitting application master " + appId);
-
+//  amContainer :
+		//
+		//    proto = {YarnProtos$ContainerLaunchContextProto@6013} "localResources {\n         key: "flink-conf.yaml"\n         value {\n                  resource {\n                           scheme: "file"\n                           port: -1\n                           file: "/Users/sysadmin/.flink/application_1615446205104_0011/application_1615446205104_0011-flink-conf.yaml3338435768180930238.tmp"\n                  }\n                  size: 775\n                  timestamp: 1615718773000\n                  type: FILE\n                  visibility: APPLICATION\n         }\n}\nlocalResources {\n         key: "flink-dist_2.11-1.12.2.jar"\n         value {\n                  resource {\n                           scheme: "file"\n                           port: -1\n                           file: "/Users/sysadmin/.flink/application_1615446205104_0011/flink-dist_2.11-1.12.2.jar"\n                  }\n                  size: 114224188\n                  timestamp: 1615718665000\n                  type: FILE\n                  visibility: APPLICATION\n         }\n}\nlocalResources {\n         key: "log4j.properties"\n         value {\n                  resource {\n                           scheme: "file"\n                           port: -1\n                           file: "/Users/sysadmin/.flink/application_1615446205104_0011/log4j.properties"\n                  }\n                  size: 2620\n                  timestamp: 1615718651000\n                  type: FILE\n                  visibility: APPLICATION\n         }\n}\nlocalResources {\n         key: "job.graph"\n         value {\n                  resource {"
+		//    builder = {YarnProtos$ContainerLaunchContextProto$Builder@6014}
+		//    viaProto = true
+		//    localResources = {HashMap@6015}         size = 5
+		//    "flink-conf.yaml" -> {LocalResourcePBImpl@6039} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0011/application_1615446205104_0011-flink-conf.yaml3338435768180930238.tmp" } size: 775 timestamp: 1615718773000 type: FILE visibility: APPLICATION"
+		//    "flink-dist_2.11-1.12.2.jar" -> {LocalResourcePBImpl@6041} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0011/flink-dist_2.11-1.12.2.jar" } size: 114224188 timestamp: 1615718665000 type: FILE visibility: APPLICATION"
+		//    "log4j.properties" -> {LocalResourcePBImpl@6043} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0011/log4j.properties" } size: 2620 timestamp: 1615718651000 type: FILE visibility: APPLICATION"
+		//    "job.graph" -> {LocalResourcePBImpl@6044} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0011/application_1615446205104_00114338987264188416150.tmp" } size: 47295 timestamp: 1615718765000 type: FILE visibility: APPLICATION"
+		//    "SocketWindowWordCount.jar" -> {LocalResourcePBImpl@6046} "resource { scheme: "file" port: -1 file: "/Users/sysadmin/.flink/application_1615446205104_0011/SocketWindowWordCount.jar" } size: 14708 timestamp: 1615718656000 type: FILE visibility: APPLICATION"
+		//    tokens = null
+		//    tokensConf = null
+		//    serviceData = null
+		//    environment = {HashMap@6016}         size = 8
+		//    "_APP_ID" -> "application_1615446205104_0011"
+		//    "_FLINK_YARN_FILES" -> "file:/Users/sysadmin/.flink/application_1615446205104_0011"
+		//    "HADOOP_USER_NAME" -> "sysadmin"
+		//    "_FLINK_CLASSPATH" -> ":SocketWindowWordCount.jar:flink-dist_2.11-1.12.2.jar:job.graph:flink-conf.yaml:"
+		//    "_CLIENT_SHIP_FILES" -> "YarnLocalResourceDescriptor{key=log4j.properties, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/log4j.properties, size=2620, modificationTime=1615718651000, visibility=APPLICATION, type=FILE};YarnLocalResourceDescriptor{key=SocketWindowWordCount.jar, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/SocketWindowWordCount.jar, size=14708, modificationTime=1615718656000, visibility=APPLICATION, type=FILE};YarnLocalResourceDescriptor{key=flink-conf.yaml, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/application_1615446205104_0011-flink-conf.yaml3338435768180930238.tmp, size=775, modificationTime=1615718773000, visibility=APPLICATION, type=FILE}"
+		//    "_FLINK_DIST_JAR" -> "YarnLocalResourceDescriptor{key=flink-dist_2.11-1.12.2.jar, path=file:/Users/sysadmin/.flink/application_1615446205104_0011/flink-dist_2.11-1.12.2.jar, size=114224188, modificationTime=1615718665000, visibility=APPLICATION, type=FILE}"
+		//    "_CLIENT_HOME_DIR" -> "file:/Users/sysadmin"
+		//    "CLASSPATH" -> ":SocketWindowWordCount.jar:flink-dist_2.11-1.12.2.jar:job.graph:flink-conf.yaml::$HADOOP_CONF_DIR:$HADOOP_COMMON_HOME/share/hadoop/common/*:$HADOOP_COMMON_HOME/share/hadoop/common/lib/*:$HADOOP_HDFS_HOME/share/hadoop/hdfs/*:$HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/*:$HADOOP_YARN_HOME/share/hadoop/yarn/*:$HADOOP_YARN_HOME/share/hadoop/yarn/lib/*"
+		//    commands = {ArrayList@6017}         size = 1
+		//    0 = "$JAVA_HOME/bin/java -Xmx1073741824 -Xms1073741824 -XX:MaxMetaspaceSize=268435456 -Dlog.file="<LOG_DIR>/jobmanager.log" -Dlog4j.configuration=file:log4j.properties -Dlog4j.configurationFile=file:log4j.properties org.apache.flink.yarn.entrypoint.YarnJobClusterEntrypoint -D jobmanager.memory.off-heap.size=134217728b -D jobmanager.memory.jvm-overhead.min=201326592b -D jobmanager.memory.jvm-metaspace.size=268435456b -D jobmanager.memory.heap.size=1073741824b -D jobmanager.memory.jvm-overhead.max=201326592b 1> <LOG_DIR>/jobmanager.out 2> <LOG_DIR>/jobmanager.err"
+		//    applicationACLS = null
+		//    containerRetryContext = null
 		/*TODO 前面做了很多上传、环境配置，终于可以提交应用了*/
+		// 提交到HDFS文件的路径是 /user/root/.flink/application_1636099347712_0001
 		yarnClient.submitApplication(appContext);
 
 		LOG.info("Waiting for the cluster to be allocated");

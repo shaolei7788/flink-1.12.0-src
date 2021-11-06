@@ -332,8 +332,9 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 	}
 
 	public static void runTaskManager(Configuration configuration, PluginManager pluginManager) throws Exception {
+		//todo  TaskManagerRunner#createTaskExecutorService = TaskExecutorToServiceAdapter
 		final TaskManagerRunner taskManagerRunner = new TaskManagerRunner(configuration, pluginManager, TaskManagerRunner::createTaskExecutorService);
-
+		//todo 启动 TaskManagerRunner
 		taskManagerRunner.start();
 	}
 
@@ -350,12 +351,14 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 
 	public static void runTaskManagerSecurely(Configuration configuration) throws Exception {
 		replaceGracefulExitWithHaltIfConfigured(configuration);
+		// 加载插件管理
 		final PluginManager pluginManager = PluginUtils.createPluginManagerFromRootFolder(configuration);
 		FileSystem.initialize(configuration, pluginManager);
-
+		// 文件系统初始化
 		SecurityUtils.install(new SecurityConfiguration(configuration));
 
 		SecurityUtils.getInstalledContext().runSecured(() -> {
+			//todo // 启动TaskManager = > runTaskManager
 			runTaskManager(configuration, pluginManager);
 			return null;
 		});
@@ -376,7 +379,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 			boolean localCommunicationOnly,
 			ExternalResourceInfoProvider externalResourceInfoProvider,
 			FatalErrorHandler fatalErrorHandler) throws Exception {
-
+		//todo 创建taskExecutor
 		final TaskExecutor taskExecutor = startTaskManager(
 				configuration,
 				resourceID,

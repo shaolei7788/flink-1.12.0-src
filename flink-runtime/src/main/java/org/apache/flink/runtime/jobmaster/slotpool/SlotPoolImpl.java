@@ -628,19 +628,16 @@ public class SlotPoolImpl implements SlotPool {
 			TaskManagerLocation taskManagerLocation,
 			TaskManagerGateway taskManagerGateway,
 			Collection<SlotOffer> offers) {
-
 		ArrayList<SlotOffer> result = new ArrayList<>(offers.size());
-
 		for (SlotOffer offer : offers) {
+			// 提供 offerSlot
 			if (offerSlot(
 				taskManagerLocation,
 				taskManagerGateway,
 				offer)) {
-
 				result.add(offer);
 			}
 		}
-
 		return result;
 	}
 

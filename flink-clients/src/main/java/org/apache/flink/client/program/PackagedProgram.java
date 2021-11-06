@@ -195,6 +195,10 @@ public class PackagedProgram {
 	 * will be a local execution by default.
 	 */
 	public void invokeInteractiveModeForExecution() throws ProgramInvocationException {
+		// mainClass: class org.apache.flink.streaming.examples.socket.SocketWindowWordCount
+		// args
+		//    0 = "--port"
+		//    1 = "9999"
 		callMainMethod(mainClass, args);
 	}
 
@@ -295,7 +299,6 @@ public class PackagedProgram {
 		if (!Modifier.isPublic(entryClass.getModifiers())) {
 			throw new ProgramInvocationException("The class " + entryClass.getName() + " must be public.");
 		}
-
 		try {
 			mainMethod = entryClass.getMethod("main", String[].class);
 		} catch (NoSuchMethodException e) {

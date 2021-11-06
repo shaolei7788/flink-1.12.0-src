@@ -56,26 +56,30 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 	/** Default connection timeout when connecting to the server socket (infinite). */
 	private static final int CONNECTION_TIMEOUT_TIME = 0;
 
-
+	// 主机地址
 	private final String hostname;
+	// 端口
 	private final int port;
+	// 分隔符
 	private final String delimiter;
+	// 最大重试次数
 	private final long maxNumRetries;
+	// 重试间隔
 	private final long delayBetweenRetries;
-
+	// 构建的socket
 	private transient Socket currentSocket;
-
+	// 标识符,是否正在运行
 	private volatile boolean isRunning = true;
 
 	public SocketTextStreamFunction(String hostname, int port, String delimiter, long maxNumRetries) {
 		this(hostname, port, delimiter, maxNumRetries, DEFAULT_CONNECTION_RETRY_SLEEP);
 	}
 
+	//赋值操作
 	public SocketTextStreamFunction(String hostname, int port, String delimiter, long maxNumRetries, long delayBetweenRetries) {
 		checkArgument(isValidClientPort(port), "port is out of range");
 		checkArgument(maxNumRetries >= -1, "maxNumRetries must be zero or larger (num retries), or -1 (infinite retries)");
 		checkArgument(delayBetweenRetries >= 0, "delayBetweenRetries must be zero or positive");
-
 		this.hostname = checkNotNull(hostname, "hostname must not be null");
 		this.port = port;
 		this.delimiter = delimiter;
@@ -86,29 +90,36 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 	@Override
 	public void run(SourceContext<String> ctx) throws Exception {
 		final StringBuilder buffer = new StringBuilder();
+		// 重试次数
 		long attempt = 0;
 
 		while (isRunning) {
-
+			// 构建socket
 			try (Socket socket = new Socket()) {
+				// 设置当前currentSocket
 				currentSocket = socket;
-
 				LOG.info("Connecting to server socket " + hostname + ':' + port);
+				// 设置连接信息和超时时间
 				socket.connect(new InetSocketAddress(hostname, port), CONNECTION_TIMEOUT_TIME);
+				// 读取socket数据
 				try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
 					char[] cbuf = new char[8192];
 					int bytesRead;
+					// 读取数据
 					while (isRunning && (bytesRead = reader.read(cbuf)) != -1) {
 						buffer.append(cbuf, 0, bytesRead);
 						int delimPos;
 						while (buffer.length() >= delimiter.length() && (delimPos = buffer.indexOf(delimiter)) != -1) {
+							// 获取数据记录
 							String record = buffer.substring(0, delimPos);
 							// truncate trailing carriage return
 							if (delimiter.equals("\n") && record.endsWith("\r")) {
 								record = record.substring(0, record.length() - 1);
 							}
+							// 处理数据
 							ctx.collect(record);
+							// 清理掉buffer中的缓存数据
 							buffer.delete(0, delimPos + delimiter.length());
 						}
 					}
@@ -116,7 +127,9 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 			}
 
 			// if we dropped out of this loop due to an EOF, sleep and retry
+			// 如果退出当前循环则重试操作
 			if (isRunning) {
+				// 重试次数相关处理
 				attempt++;
 				if (maxNumRetries == -1 || attempt < maxNumRetries) {
 					LOG.warn("Lost connection to server socket. Retrying in " + delayBetweenRetries + " msecs...");

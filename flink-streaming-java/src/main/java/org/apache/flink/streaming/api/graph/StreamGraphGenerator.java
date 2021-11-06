@@ -250,6 +250,7 @@ public class StreamGraphGenerator {
 	}
 
 	public StreamGraph generate() {
+		//创建streamGraph
 		streamGraph = new StreamGraph(executionConfig, checkpointConfig, savepointRestoreSettings);
 		shouldExecuteInBatchMode = shouldExecuteInBatchMode(runtimeExecutionMode);
 		configureStreamGraph(streamGraph);
@@ -369,7 +370,6 @@ public class StreamGraphGenerator {
 		LOG.debug("Transforming " + transform);
 
 		if (transform.getMaxParallelism() <= 0) {
-
 			// if the max parallelism hasn't been set, then first use the job wide max parallelism
 			// from the ExecutionConfig.
 			int globalMaxParallelismFromConfig = executionConfig.getMaxParallelism();

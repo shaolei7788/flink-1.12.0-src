@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
  * Connecting to a rpc server will return a {@link RpcGateway} which can be used to call remote
  * procedures.
  */
+//对应 ActorSystem 的封装
 public interface RpcService {
 
 	/**

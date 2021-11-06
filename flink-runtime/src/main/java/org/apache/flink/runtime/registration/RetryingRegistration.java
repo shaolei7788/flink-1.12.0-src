@@ -141,6 +141,7 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 			final CompletableFuture<G> rpcGatewayFuture;
 
 			if (FencedRpcGateway.class.isAssignableFrom(targetType)) {
+				//todo 建立连接
 				rpcGatewayFuture = (CompletableFuture<G>) rpcService.connect(
 					targetAddress,
 					fencingToken,
@@ -153,6 +154,7 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 			CompletableFuture<Void> rpcGatewayAcceptFuture = rpcGatewayFuture.thenAcceptAsync(
 				(G rpcGateway) -> {
 					log.info("Resolved {} address, beginning registration", targetName);
+					// 执行注册操作
 					register(rpcGateway, 1, retryingRegistrationConfiguration.getInitialRegistrationTimeoutMillis());
 				},
 				rpcService.getExecutor());
@@ -177,7 +179,7 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 								retryingRegistrationConfiguration.getErrorDelayMillis(),
 								strippedFailure.getMessage());
 						}
-
+						// 开始注册
 						startRegistrationLater(retryingRegistrationConfiguration.getErrorDelayMillis());
 					}
 				},
@@ -202,6 +204,8 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 
 		try {
 			log.debug("Registration at {} attempt {} (timeout={}ms)", targetName, attempt, timeoutMillis);
+			// [重点]注册的时候会调用 invokeRegistration 方法 .................
+			// TaskExecutorToResourceManagerConnection#invokeRegistration
 			CompletableFuture<RegistrationResponse> registrationFuture = invokeRegistration(gateway, fencingToken, timeoutMillis);
 
 			// if the registration was successful, let the TaskExecutor know

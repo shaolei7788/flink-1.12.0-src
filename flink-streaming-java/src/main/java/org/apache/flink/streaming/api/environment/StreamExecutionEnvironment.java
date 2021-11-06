@@ -17,6 +17,8 @@
 
 package org.apache.flink.streaming.api.environment;
 
+import com.sun.xml.internal.bind.v2.TODO;
+
 import org.apache.flink.annotation.Experimental;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.Public;
@@ -154,6 +156,7 @@ public class StreamExecutionEnvironment {
 	/** Settings that control the checkpointing behavior. */
 	private final CheckpointConfig checkpointCfg = new CheckpointConfig();
 
+	//
 	protected final List<Transformation<?>> transformations = new ArrayList<>();
 
 	private long bufferTimeout = StreamingJobGraphGenerator.UNDEFINED_NETWORK_BUFFER_TIMEOUT;
@@ -1698,6 +1701,7 @@ public class StreamExecutionEnvironment {
 	 * @return the data stream constructed
 	 */
 	public <OUT> DataStreamSource<OUT> addSource(SourceFunction<OUT> function, String sourceName, TypeInformation<OUT> typeInfo) {
+		//todo Boundedness 是枚举类, 代表数据源的类型是有界数据[BOUNDED]或者是无界[CONTINUOUS_UNBOUNDED]数据
 		return addSource(function, sourceName, typeInfo, Boundedness.CONTINUOUS_UNBOUNDED);
 	}
 
@@ -1717,6 +1721,7 @@ public class StreamExecutionEnvironment {
 		clean(function);
 
 		final StreamSource<OUT, ?> sourceOperator = new StreamSource<>(function);
+		//DataStreamSource extends SingleOutputStreamOperator
 		return new DataStreamSource<>(this, resolvedTypeInfo, sourceOperator, isParallel, sourceName, boundedness);
 	}
 
@@ -1818,9 +1823,10 @@ public class StreamExecutionEnvironment {
 	 */
 	public JobExecutionResult execute(String jobName) throws Exception {
 		Preconditions.checkNotNull(jobName, "Streaming Job name should not be null.");
-
-		/*TODO 获取StreamGraph，并接着执行*/
-		return execute(getStreamGraph(jobName));
+		//TODO 创建StreamGraph
+		StreamGraph streamGraph = getStreamGraph(jobName);
+		//yarn-per-job模式下 会执行StreamContextEnvironment#execute
+		return execute(streamGraph);
 	}
 
 	/**
@@ -1834,9 +1840,10 @@ public class StreamExecutionEnvironment {
 	 */
 	@Internal
 	public JobExecutionResult execute(StreamGraph streamGraph) throws Exception {
+		//执行异步提交
 		final JobClient jobClient = executeAsync(streamGraph);
-
 		try {
+			//job执行的结果
 			final JobExecutionResult jobExecutionResult;
 
 			if (configuration.getBoolean(DeploymentOptions.ATTACHED)) {
@@ -1927,17 +1934,18 @@ public class StreamExecutionEnvironment {
 	public JobClient executeAsync(StreamGraph streamGraph) throws Exception {
 		checkNotNull(streamGraph, "StreamGraph cannot be null.");
 		checkNotNull(configuration.get(DeploymentOptions.TARGET), "No execution.target specified in your configuration file.");
-
-		final PipelineExecutorFactory executorFactory =
-			executorServiceLoader.getExecutorFactory(configuration);
+		//todo executorFactory = YarnJobClusterExecutorFactory extends PipelineExecutorFactory
+		final PipelineExecutorFactory executorFactory = executorServiceLoader.getExecutorFactory(configuration);
 
 		checkNotNull(
 			executorFactory,
 			"Cannot find compatible factory for specified execution.target (=%s)",
 			configuration.get(DeploymentOptions.TARGET));
 
+		// getExecutor(configuration) = new YarnJobClusterExecutor()
 		CompletableFuture<JobClient> jobClientFuture = executorFactory
 			.getExecutor(configuration)
+			//todo AbstractJobClusterExecutor#execute
 			.execute(streamGraph, configuration, userClassloader);
 
 		try {
@@ -2051,6 +2059,7 @@ public class StreamExecutionEnvironment {
 	@Internal
 	public void addOperator(Transformation<?> transformation) {
 		Preconditions.checkNotNull(transformation, "transformation must not be null.");
+		//添加addOperator
 		this.transformations.add(transformation);
 	}
 
@@ -2090,6 +2099,7 @@ public class StreamExecutionEnvironment {
 			.map(factory -> factory.createExecutionEnvironment(configuration))
 			.orElseGet(() -> StreamExecutionEnvironment.createLocalEnvironment(configuration));
 	}
+
 
 	/**
 	 * Creates a {@link LocalStreamEnvironment}. The local execution environment

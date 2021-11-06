@@ -288,7 +288,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		log.info("Initializing job {} ({}).", jobName, jid);
 
 		resourceManagerLeaderRetriever = highAvailabilityServices.getResourceManagerLeaderRetriever();
-
+		//todo 创建slotPoll
 		this.slotPool = checkNotNull(slotPoolFactory).createSlotPool(jid);
 
 		this.registeredTaskManagers = new HashMap<>(4);
@@ -572,6 +572,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		final RpcTaskManagerGateway rpcTaskManagerGateway = new RpcTaskManagerGateway(taskExecutorGateway, getFencingToken());
 
 		return CompletableFuture.completedFuture(
+			// [重要] 提供slots
 			slotPool.offerSlots(
 				taskManagerLocation,
 				rpcTaskManagerGateway,

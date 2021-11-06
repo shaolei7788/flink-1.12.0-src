@@ -154,7 +154,6 @@
     <file url="file://$PROJECT_DIR$/flink-runtime" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-runtime-web" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-scala" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/flink-scala-shell" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-state-backends" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-state-backends/flink-statebackend-heap-spillable" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/flink-state-backends/flink-statebackend-rocksdb" charset="UTF-8" />

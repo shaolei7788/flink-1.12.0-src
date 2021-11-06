@@ -38,6 +38,7 @@ import org.apache.flink.runtime.clusterframework.ApplicationStatus;
 import org.apache.flink.runtime.concurrent.FutureUtils;
 import org.apache.flink.runtime.concurrent.ScheduledExecutor;
 import org.apache.flink.runtime.dispatcher.ArchivedExecutionGraphStore;
+import org.apache.flink.runtime.dispatcher.FileArchivedExecutionGraphStore;
 import org.apache.flink.runtime.dispatcher.MiniDispatcher;
 import org.apache.flink.runtime.entrypoint.component.DispatcherResourceManagerComponent;
 import org.apache.flink.runtime.entrypoint.component.DispatcherResourceManagerComponentFactory;
@@ -170,8 +171,8 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			SecurityContext securityContext = installSecurityContext(configuration);
 
 			securityContext.runSecured((Callable<Void>) () -> {
+				//todo
 				runCluster(configuration, pluginManager);
-
 				return null;
 			});
 		} catch (Throwable t) {
@@ -209,16 +210,15 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	private void runCluster(Configuration configuration, PluginManager pluginManager) throws Exception {
 		synchronized (lock) {
 
-			/*TODO 初始化服务：Rpc相关*/
+			/*TODO 初始化服务：心跳,Rpc相关*/
 			initializeServices(configuration, pluginManager);
-
 			// write host information into configuration
+			// 在配置中写入host和port 信息
 			configuration.setString(JobManagerOptions.ADDRESS, commonRpcService.getAddress());
 			configuration.setInteger(JobManagerOptions.PORT, commonRpcService.getPort());
-
+			//todo YarnJobClusterEntrypoint#createDispatcherResourceManagerComponentFactory
 			final DispatcherResourceManagerComponentFactory dispatcherResourceManagerComponentFactory = createDispatcherResourceManagerComponentFactory(configuration);
-
-			/*TODO 创建和启动 JobManager里的组件：Dispatcher、ResourceManager、JobMaster*/
+			/*TODO 创建和启动 JobManager里的组件：Dispatcher、ResourceManager、JobMaster,WebMonitorEndpoint*/
 			clusterComponent = dispatcherResourceManagerComponentFactory.create(
 				configuration,
 				ioExecutor,
@@ -230,7 +230,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 				archivedExecutionGraphStore,
 				new RpcMetricQueryServiceRetriever(metricRegistry.getMetricQueryServiceRpcService()),
 				this);
-
+			// 关闭操作
 			clusterComponent.getShutDownFuture().whenComplete(
 				(ApplicationStatus applicationStatus, Throwable throwable) -> {
 					if (throwable != null) {
@@ -255,6 +255,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 		LOG.info("Initializing cluster services.");
 
 		synchronized (lock) {
+			//todo 初始化和启动 AkkaRpcService，内部其实包装了一个 ActorSystem
 			commonRpcService = AkkaRpcServiceUtils.createRemoteRpcService(
 				configuration,
 				configuration.getString(JobManagerOptions.ADDRESS),
@@ -267,13 +268,16 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			// update the configuration used to create the high availability services
 			configuration.setString(JobManagerOptions.ADDRESS, commonRpcService.getAddress());
 			configuration.setInteger(JobManagerOptions.PORT, commonRpcService.getPort());
-
+			//todo 初始化一个负责 IO 的线程池
 			ioExecutor = Executors.newFixedThreadPool(
 				ClusterEntrypointUtils.getPoolSize(configuration),
 				new ExecutorThreadFactory("cluster-io"));
+			//初始化 HA 服务组件，负责 HA 服务的是：ZooKeeperHaServices
 			haServices = createHaServices(configuration, ioExecutor);
+			//初始化 BlobServer 服务端
 			blobServer = new BlobServer(configuration, haServices.createBlobStore());
 			blobServer.start();
+			// 初始化心跳服务组件, heartbeatServices = HeartbeatServices
 			heartbeatServices = createHeartbeatServices(configuration);
 			metricRegistry = createMetricRegistry(configuration, pluginManager);
 
@@ -286,7 +290,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 				metricRegistry,
 				hostname,
 				ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
-
+			//todo 初始化一个用来存储 ExecutionGraph 的 Store, 实现是：FileArchivedExecutionGraphStore
 			archivedExecutionGraphStore = createSerializableExecutionGraphStore(configuration, commonRpcService.getScheduledExecutor());
 		}
 	}
@@ -528,6 +532,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 		final String clusterEntrypointName = clusterEntrypoint.getClass().getSimpleName();
 		try {
+			//todo 启动集群
 			clusterEntrypoint.startCluster();
 		} catch (ClusterEntrypointException e) {
 			LOG.error(String.format("Could not start cluster entrypoint %s.", clusterEntrypointName), e);

@@ -87,6 +87,17 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * </ul>
  * The running state can be queried in a RPC method handler or in the main thread by calling {@link #isRunning()} method.
  */
+//业务逻辑载体，对应的 Actor 的封装
+
+/**
+ * 1、TaskExecutor
+ * 2、Dispatcher 负责接收用户提交的 JobGragh, 然后启动一个 JobManager， 类似于 YARN 集群中的AppMaster 角色，类似于 Spark Job 中的 Driver 角色
+ * 3、JobMaster  负责一个具体的 Job 的执行，在一个集群中，可能会有多个 JobManager 同时执行，类似于 YARN集群中的 AppMaster 角色，类似于 Spark Job 中的 Driver 角色
+ * 4、ResourceManager  Flink的集群资源管理器，只有一个，关于slot的管理和申请等工作，都由他负责
+ * 上面都是子类
+ * 创建这四个组件的任何一个组件的实例对象的时候，创建成功了之后，都会要去执
+ * 行它的 onStart()
+ */
 public abstract class RpcEndpoint implements RpcGateway, AutoCloseableAsync {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());

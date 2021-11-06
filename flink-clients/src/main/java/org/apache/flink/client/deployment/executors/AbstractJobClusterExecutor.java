@@ -57,18 +57,39 @@ public class AbstractJobClusterExecutor<ClusterID, ClientFactory extends Cluster
 		this.clusterClientFactory = checkNotNull(clusterClientFactory);
 	}
 
+	// pipeline = streamGraph
 	@Override
 	public CompletableFuture<JobClient> execute(@Nonnull final Pipeline pipeline, @Nonnull final Configuration configuration, @Nonnull final ClassLoader userCodeClassloader) throws Exception {
 		/*TODO 将 流图（StreamGraph） 转换成 作业图（JobGraph）*/
 		final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
 
 		/*TODO 集群描述器：创建、启动了 YarnClient， 包含了一些yarn、flink的配置和环境信息*/
+		// YarnClusterClientFactory#createClusterDescriptor
 		try (final ClusterDescriptor<ClusterID> clusterDescriptor = clusterClientFactory.createClusterDescriptor(configuration)) {
+			//    {
+			//            taskmanager.memory.process.size=1728m,
+			//            jobmanager.execution.failover-strategy=region,
+			//            jobmanager.rpc.address=localhost,
+			//            execution.target=yarn-per-job,
+			//            jobmanager.memory.process.size=1600m,
+			//            jobmanager.rpc.port=6123,
+			//            execution.savepoint.ignore-unclaimed-state=false,
+			//            execution.attached=true,
+			//            execution.shutdown-on-attached-exit=false,
+			//            pipeline.jars=[file:/opt/tools/flink-1.12.2/examples/streaming/SocketWindowWordCount.jar],
+			//            parallelism.default=1,
+			//            taskmanager.numberOfTaskSlots=1,
+			//            pipeline.classpaths=[],
+			//            $internal.deployment.config-dir=/opt/tools/flink-1.12.2/conf,
+			//            $internal.yarn.log-config-file=/opt/tools/flink-1.12.2/conf/log4j.properties
+			//    }
 			final ExecutionConfigAccessor configAccessor = ExecutionConfigAccessor.fromConfiguration(configuration);
-
 			/*TODO 集群特有资源配置：JobManager内存、TaskManager内存、每个Tm的slot数*/
+			//    masterMemoryMB = 1600
+			//    taskManagerMemoryMB = 1728
+			//    slotsPerTaskManager = 1
 			final ClusterSpecification clusterSpecification = clusterClientFactory.getClusterSpecification(configuration);
-
+			//todo 部署集群   YarnClusterDescriptor#deployJobCluster  会提交用户jar包，flinkjar包到HDFS
 			final ClusterClientProvider<ClusterID> clusterClientProvider = clusterDescriptor
 					.deployJobCluster(clusterSpecification, jobGraph, configAccessor.getDetachedMode());
 			LOG.info("Job has been submitted with JobID " + jobGraph.getJobID());
