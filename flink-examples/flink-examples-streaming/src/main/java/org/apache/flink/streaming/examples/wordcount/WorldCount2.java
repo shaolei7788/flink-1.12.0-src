@@ -36,6 +36,5 @@ public class WorldCount2 {
         // 7. 执行
         env.execute();
 
-
     }
 }
