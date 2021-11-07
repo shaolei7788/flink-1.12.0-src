@@ -40,6 +40,7 @@ import org.apache.flink.runtime.concurrent.ScheduledExecutor;
 import org.apache.flink.runtime.dispatcher.ArchivedExecutionGraphStore;
 import org.apache.flink.runtime.dispatcher.FileArchivedExecutionGraphStore;
 import org.apache.flink.runtime.dispatcher.MiniDispatcher;
+import org.apache.flink.runtime.dispatcher.runner.DefaultDispatcherRunnerFactory;
 import org.apache.flink.runtime.entrypoint.component.DispatcherResourceManagerComponent;
 import org.apache.flink.runtime.entrypoint.component.DispatcherResourceManagerComponentFactory;
 import org.apache.flink.runtime.entrypoint.parser.CommandLineParser;
@@ -209,15 +210,19 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 	private void runCluster(Configuration configuration, PluginManager pluginManager) throws Exception {
 		synchronized (lock) {
-
-			/*TODO 初始化服务：心跳,Rpc相关*/
+			/*TODO 初始化了很多服务 核心*/
 			initializeServices(configuration, pluginManager);
 			// write host information into configuration
 			// 在配置中写入host和port 信息
 			configuration.setString(JobManagerOptions.ADDRESS, commonRpcService.getAddress());
 			configuration.setInteger(JobManagerOptions.PORT, commonRpcService.getPort());
 			//todo YarnJobClusterEntrypoint#createDispatcherResourceManagerComponentFactory
-			final DispatcherResourceManagerComponentFactory dispatcherResourceManagerComponentFactory = createDispatcherResourceManagerComponentFactory(configuration);
+			// 创建了三个工厂实例
+			// 1 DefaultDispatcherRunnerFactory
+			// 2 YarnResourceManagerFactory
+			// 3 JobRestEndpointFactory (restEndpointFactory)
+			final DispatcherResourceManagerComponentFactory dispatcherResourceManagerComponentFactory =
+					createDispatcherResourceManagerComponentFactory(configuration);
 			/*TODO 创建和启动 JobManager里的组件：Dispatcher、ResourceManager、JobMaster,WebMonitorEndpoint*/
 			clusterComponent = dispatcherResourceManagerComponentFactory.create(
 				configuration,
@@ -251,11 +256,9 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	}
 
 	protected void initializeServices(Configuration configuration, PluginManager pluginManager) throws Exception {
-
 		LOG.info("Initializing cluster services.");
-
 		synchronized (lock) {
-			//todo 初始化和启动 AkkaRpcService，内部其实包装了一个 ActorSystem
+			//todo 1 初始化和启动 AkkaRpcService，内部其实包装了一个 ActorSystem
 			commonRpcService = AkkaRpcServiceUtils.createRemoteRpcService(
 				configuration,
 				configuration.getString(JobManagerOptions.ADDRESS),
@@ -268,19 +271,19 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			// update the configuration used to create the high availability services
 			configuration.setString(JobManagerOptions.ADDRESS, commonRpcService.getAddress());
 			configuration.setInteger(JobManagerOptions.PORT, commonRpcService.getPort());
-			//todo 初始化一个负责 IO 的线程池
+			//todo 2 初始化一个负责 IO 的线程池
 			ioExecutor = Executors.newFixedThreadPool(
 				ClusterEntrypointUtils.getPoolSize(configuration),
 				new ExecutorThreadFactory("cluster-io"));
-			//初始化 HA 服务组件，负责 HA 服务的是：ZooKeeperHaServices
+			//todo 3 初始化 HA 服务组件，负责 HA 服务的是：ZooKeeperHaServices
 			haServices = createHaServices(configuration, ioExecutor);
-			//初始化 BlobServer 服务端
+			//todo 4 初始化 BlobServer 服务端  主要是管理一些大文件的上传，比如用户作业的jar包，TM上传log文件
 			blobServer = new BlobServer(configuration, haServices.createBlobStore());
 			blobServer.start();
-			// 初始化心跳服务组件, heartbeatServices = HeartbeatServices
+			//todo 5  初始化心跳服务组件, heartbeatServices = HeartbeatServices  用于提供心跳实例对象HeartBeatImpl
 			heartbeatServices = createHeartbeatServices(configuration);
+			//todo 6 初始化性能监控服务
 			metricRegistry = createMetricRegistry(configuration, pluginManager);
-
 			final RpcService metricQueryServiceRpcService = MetricUtils.startRemoteMetricsRpcService(configuration, commonRpcService.getAddress());
 			metricRegistry.startQueryService(metricQueryServiceRpcService, null);
 
@@ -290,7 +293,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 				metricRegistry,
 				hostname,
 				ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
-			//todo 初始化一个用来存储 ExecutionGraph 的 Store, 实现是：FileArchivedExecutionGraphStore
+			//todo 7 初始化一个用来存储 ExecutionGraph 的 Store, 实现是：FileArchivedExecutionGraphStore
 			archivedExecutionGraphStore = createSerializableExecutionGraphStore(configuration, commonRpcService.getScheduledExecutor());
 		}
 	}

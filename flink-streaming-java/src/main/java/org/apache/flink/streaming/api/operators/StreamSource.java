@@ -34,6 +34,26 @@ import org.apache.flink.streaming.runtime.tasks.ProcessingTimeService;
 import java.util.concurrent.ScheduledFuture;
 
 /**
+ * Stream Source 的约定如下:
+ *
+ * 1. 当Source开始发射元素时，{@link#run}方法被调用，其中{@link SourceContext}可用于发射元素。
+ * 2. run方法可以根据需要运行任意长的时间。
+ * 3. 可以调用{@link #cancel()} 方法退出run 方法
+ *
+ * 二.  CheckpointedFunction Sources
+ *      Sources可以实现 {@link  org.apache.flink.streaming.api.checkpoint.CheckpointedFunction} 接口必须保证  state checkpointing , 内部状态更新 和 元素发送不会同时进行.
+ *      可以在synchronized代码块汇总 使用提供的 checkpointing lock object 锁 来保护 状态更新和 发送数据.
+ *
+ *      这是实现  checkpointed Source 时应遵循的基本模式：
+ *
+ * 三. Timestamps and watermarks
+ *
+ *  Sources可以为数据分配timestamps，并且可以手动发出watermarks 。
+ *      但是，只有当 streaming program 在{@link TimeCharacteristic#EventTime}上运行时，才会有效。
+ *  在({@link TimeCharacteristic#IngestionTime} and {@link  TimeCharacteristic#ProcessingTime})模式watermarks就会失效.
+ */
+
+/**
  * {@link StreamOperator} for streaming sources.
  *
  * @param <OUT> Type of the output elements
@@ -44,6 +64,7 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 
 	private static final long serialVersionUID = 1L;
 
+	//用于 source function 发送数据或者水印相关的操作
 	private transient SourceFunction.SourceContext<OUT> ctx;
 
 	private transient volatile boolean canceledOrStopped = false;

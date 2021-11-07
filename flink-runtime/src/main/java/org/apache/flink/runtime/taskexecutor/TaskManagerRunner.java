@@ -203,6 +203,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 	// --------------------------------------------------------------------------------------------
 
 	public void start() throws Exception {
+		// TaskExecutorToServiceAdapter#start
 		taskExecutorService.start();
 	}
 
@@ -379,7 +380,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 			boolean localCommunicationOnly,
 			ExternalResourceInfoProvider externalResourceInfoProvider,
 			FatalErrorHandler fatalErrorHandler) throws Exception {
-		//todo 创建taskExecutor
+		//todo 创建 taskExecutor
 		final TaskExecutor taskExecutor = startTaskManager(
 				configuration,
 				resourceID,
@@ -391,7 +392,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 				localCommunicationOnly,
 				externalResourceInfoProvider,
 				fatalErrorHandler);
-
+		//todo
 		return TaskExecutorToServiceAdapter.createFor(taskExecutor);
 	}
 
@@ -415,9 +416,9 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 		LOG.info("Starting TaskManager with ResourceID: {}", resourceID.getStringWithMetadata());
 
 		String externalAddress = rpcService.getAddress();
-
+		//todo 创建任务执行资源规格
 		final TaskExecutorResourceSpec taskExecutorResourceSpec = TaskExecutorResourceUtils.resourceSpecFromConfig(configuration);
-
+		//todo
 		TaskManagerServicesConfiguration taskManagerServicesConfiguration =
 			TaskManagerServicesConfiguration.fromConfiguration(
 				configuration,
@@ -452,7 +453,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 			TaskManagerConfiguration.fromConfiguration(configuration, taskExecutorResourceSpec, externalAddress);
 
 		String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
-
+		//todo 创建TaskExecutor对象
 		return new TaskExecutor(
 			rpcService,
 			taskManagerConfiguration,

@@ -378,11 +378,13 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
 			// tell the task slot table who's responsible for the task slot actions
 			//todo 告诉 task slot table 谁负责 task slot 操作
+			// 启动 TaskSlotTable 服务  TaskSlotTableImpl#start
 			taskSlotTable.start(new SlotActionsImpl(), getMainThreadExecutor());
 
 			// start the job leader service
+			//监控 JobMaster
 			jobLeaderService.start(getAddress(), getRpcService(), haServices, new JobLeaderListenerImpl());
-
+			//启动 FileCache 服务
 			fileCache = new FileCache(taskManagerConfiguration.getTmpDirectories(), blobCacheService.getPermanentBlobService());
 		} catch (Exception e) {
 			handleStartTaskExecutorServicesException(e);
@@ -509,7 +511,6 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 	// ----------------------------------------------------------------------
 	// Task lifecycle RPCs
 	// ----------------------------------------------------------------------
-
 	@Override
 	public CompletableFuture<Acknowledge> submitTask(
 			TaskDeploymentDescriptor tdd,
@@ -616,7 +617,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			} catch (SlotNotFoundException e) {
 				throw new TaskSubmissionException("Could not submit task.", e);
 			}
-
+			//todo 创建Task对象，是一个线程
 			Task task = new Task(
 				jobInformation,
 				taskInformation,
@@ -656,14 +657,15 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			boolean taskAdded;
 
 			try {
+				// TaskSlotTableImpl#addTask
 				taskAdded = taskSlotTable.addTask(task);
 			} catch (SlotNotFoundException | SlotNotActiveException e) {
 				throw new TaskSubmissionException("Could not submit task.", e);
 			}
 
 			if (taskAdded) {
+				//启动任务线程
 				task.startTaskThread();
-
 				setupResultPartitionBookkeeping(
 					tdd.getJobId(),
 					tdd.getProducedPartitions(),

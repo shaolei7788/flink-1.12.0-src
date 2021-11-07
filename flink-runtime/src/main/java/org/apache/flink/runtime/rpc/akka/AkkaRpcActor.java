@@ -170,6 +170,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
 		try {
 			switch (controlMessage) {
 				case START:
+					//todo
 					state = state.start(this);
 					break;
 				case STOP:
@@ -550,6 +551,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
 			akkaRpcActor.mainThreadValidator.enterMainThread();
 
 			try {
+				//todo
 				akkaRpcActor.rpcEndpoint.internalCallOnStart();
 			} catch (Throwable throwable) {
 				akkaRpcActor.stop(

@@ -38,7 +38,7 @@ public class StreamMap<IN, OUT>
 
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
-		// userFunction.map() 就是用户定义的MapFunction里的map方法
+		//todo userFunction.map() 就是用户定义的MapFunction里的map方法
 		output.collect(element.replace(userFunction.map(element.getValue())));
 	}
 }

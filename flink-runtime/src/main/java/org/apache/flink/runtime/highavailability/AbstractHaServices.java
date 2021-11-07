@@ -72,16 +72,20 @@ public abstract class AbstractHaServices implements HighAvailabilityServices {
 
 	@Override
 	public LeaderRetrievalService getResourceManagerLeaderRetriever() {
+		// getLeaderNameForResourceManager() = /resource_manager_lock
 		return createLeaderRetrievalService(getLeaderNameForResourceManager());
 	}
 
 	@Override
 	public LeaderRetrievalService getDispatcherLeaderRetriever() {
+		// ZooKeeperHaServices#createLeaderRetrievalService
+		// getLeaderNameForDispatcher() = /dispatcher_lock
 		return createLeaderRetrievalService(getLeaderNameForDispatcher());
 	}
 
 	@Override
 	public LeaderRetrievalService getJobManagerLeaderRetriever(JobID jobID) {
+		//  / + jobID + /job_manager_lock
 		return createLeaderRetrievalService(getLeaderNameForJobManager(jobID));
 	}
 

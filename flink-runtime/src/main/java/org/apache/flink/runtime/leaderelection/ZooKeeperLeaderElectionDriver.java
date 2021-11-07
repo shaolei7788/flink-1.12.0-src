@@ -90,6 +90,7 @@ public class ZooKeeperLeaderElectionDriver implements LeaderElectionDriver, Lead
 			CuratorFramework client,
 			String latchPath,
 			String leaderPath,
+			//LeaderElectionFatalErrorHandler
 			LeaderElectionEventHandler leaderElectionEventHandler,
 			FatalErrorHandler fatalErrorHandler,
 			String leaderContenderDescription) throws Exception {
@@ -107,6 +108,7 @@ public class ZooKeeperLeaderElectionDriver implements LeaderElectionDriver, Lead
 		running = true;
 
 		leaderLatch.addListener(this);
+		//todo  开始进行选举，当选为ledaer 会调用isLeader
 		leaderLatch.start();
 
 		cache.getListenable().addListener(this);
@@ -155,6 +157,7 @@ public class ZooKeeperLeaderElectionDriver implements LeaderElectionDriver, Lead
 
 	@Override
 	public void isLeader() {
+		//todo  LeaderElectionFatalErrorHandler
 		leaderElectionEventHandler.onGrantLeadership();
 	}
 

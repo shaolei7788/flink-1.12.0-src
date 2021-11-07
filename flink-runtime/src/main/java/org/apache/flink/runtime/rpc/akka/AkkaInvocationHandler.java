@@ -178,6 +178,7 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
 
 	@Override
 	public void start() {
+		// 发送一个start消息，也是就是ResourceManager 启动成功了
 		rpcEndpoint.tell(ControlMessages.START, ActorRef.noSender());
 	}
 

@@ -509,7 +509,6 @@ public class TaskSlotTableImpl<T extends TaskSlotPayload> implements TaskSlotTab
 			if (taskSlot.isActive(task.getJobID(), task.getAllocationId())) {
 				if (taskSlot.add(task)) {
 					taskSlotMappings.put(task.getExecutionId(), new TaskSlotMapping<>(task, taskSlot));
-
 					return true;
 				} else {
 					return false;

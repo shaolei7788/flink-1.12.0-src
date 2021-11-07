@@ -346,6 +346,7 @@ public class AkkaRpcServiceUtils {
 					customConfig);
 			} else {
 				// create remote actor system
+				// todo 创建ActorSystem 对象
 				actorSystem = BootstrapTools.startRemoteActorSystem(
 					configuration,
 					actorSystemName,
@@ -357,7 +358,7 @@ public class AkkaRpcServiceUtils {
 					actorSystemExecutorConfiguration,
 					customConfig);
 			}
-
+			//todo
 			return new AkkaRpcService(actorSystem, AkkaRpcServiceConfiguration.fromConfiguration(configuration));
 		}
 

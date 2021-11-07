@@ -64,6 +64,7 @@ public final class StreamOneInputProcessor<IN> implements StreamInputProcessor {
 
 	@Override
 	public InputStatus processInput() throws Exception {
+		// StreamTaskNetworkInput#emitNext
 		InputStatus status = input.emitNext(output);
 
 		if (status == InputStatus.END_OF_INPUT) {

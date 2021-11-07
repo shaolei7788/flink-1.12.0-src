@@ -168,7 +168,6 @@ public class MailboxProcessor implements Closeable {
 	 * Runs the mailbox processing loop. This is where the main work is done.
 	 */
 	public void runMailboxLoop() throws Exception {
-
 		final TaskMailbox localMailbox = mailbox;
 
 		Preconditions.checkState(
@@ -185,6 +184,7 @@ public class MailboxProcessor implements Closeable {
 			processMail(localMailbox, false);
 			if (isMailboxLoopRunning()) {
 				// 邮箱默认操作在 StreamTask构造器中指定，为 processInput()
+				// this.mailboxProcessor = new MailboxProcessor(this::processInput, mailbox, actionExecutor) 在StreamTask里执行
 				mailboxDefaultAction.runDefaultAction(defaultActionContext); // lock is acquired inside default action as needed
 			}
 		}

@@ -31,9 +31,11 @@ final class DispatcherRunnerLeaderElectionLifecycleManager<T extends DispatcherR
 	private final LeaderElectionService leaderElectionService;
 
 	private DispatcherRunnerLeaderElectionLifecycleManager(T dispatcherRunner, LeaderElectionService leaderElectionService) throws Exception {
+		// DefaultDispatcherRunner
 		this.dispatcherRunner = dispatcherRunner;
+		//DefaultLeaderElectionService
 		this.leaderElectionService = leaderElectionService;
-
+		//todo DefaultDispatcherRunner#start
 		leaderElectionService.start(dispatcherRunner);
 	}
 
@@ -61,7 +63,7 @@ final class DispatcherRunnerLeaderElectionLifecycleManager<T extends DispatcherR
 	}
 
 	public static <T extends DispatcherRunner & LeaderContender> DispatcherRunner createFor(T dispatcherRunner, LeaderElectionService leaderElectionService) throws Exception {
-		//todo
+		//todo leaderElectionService = DefaultLeaderElectionService
 		return new DispatcherRunnerLeaderElectionLifecycleManager<>(dispatcherRunner, leaderElectionService);
 	}
 }

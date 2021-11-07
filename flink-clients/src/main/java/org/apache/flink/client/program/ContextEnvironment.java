@@ -156,6 +156,7 @@ public class ContextEnvironment extends ExecutionEnvironment {
 			userCodeClassLoader,
 			enforceSingleJobExecution,
 			suppressSysout);
+		//初始化上下文工厂
 		initializeContextEnvironment(factory);
 	}
 

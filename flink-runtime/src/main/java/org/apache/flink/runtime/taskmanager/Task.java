@@ -699,6 +699,10 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 
 			// now load and instantiate the task's invokable code
 			/*TODO 加载和实例化task的可执行代码*/
+			// DataSourceTask
+			// StreamTask
+			// DataSinkTask
+			// BatchTask  批处理
 			invokable = loadAndInstantiateInvokable(userCodeClassLoader.asClassLoader(), nameOfInvokableClass, env);
 
 			// ----------------------------------------------------------------

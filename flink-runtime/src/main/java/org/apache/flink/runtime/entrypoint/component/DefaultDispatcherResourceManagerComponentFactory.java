@@ -106,6 +106,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			Configuration configuration,
 			Executor ioExecutor,
 			RpcService rpcService,
+			//ZooKeeperHaServices
 			HighAvailabilityServices highAvailabilityServices,
 			BlobServer blobServer,
 			HeartbeatServices heartbeatServices,
@@ -121,7 +122,8 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 		DispatcherRunner dispatcherRunner = null;
 
 		try {
-			// Dispatcher 高可用相关
+			// Dispatcher 高可用相关   AbstractHaServices#getDispatcherLeaderRetriever
+			// dispatcherLeaderRetrievalService = DefaultLeaderRetrievalService
 			dispatcherLeaderRetrievalService = highAvailabilityServices.getDispatcherLeaderRetriever();
 			// ResourceManager 高可用相关
 			resourceManagerRetrievalService = highAvailabilityServices.getResourceManagerLeaderRetriever();
@@ -154,7 +156,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			//todo WEB UI 相关服务
 			// 里面维护了很多很多的Handler，如果客户端通过 flink run 的方式来提交一个 job 到 flink
 			// 集群，最终，是由 WebMonitorEndpoint 来接收，并且决定使用哪一个 Handler 来执行处理
-			// submitJob ===> SubmitJobHandler
+			// webMonitorEndpoint = MiniDispatcherRestEndpoint
 			webMonitorEndpoint = restEndpointFactory.createRestEndpoint(
 				configuration,
 				dispatcherGatewayRetriever,
@@ -171,6 +173,8 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			final String hostname = RpcUtils.getHostname(rpcService);
 
 			/*TODO 创建 ResourceManager：Yarn模式的 ResourceManager*/
+			// YarnResourceManagerFactory extends ActiveResourceManagerFactory
+			// resourceManager = ActiveResourceManager
 			resourceManager = resourceManagerFactory.createResourceManager(
 				configuration,
 				ResourceID.generate(),
@@ -201,6 +205,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 
 			log.debug("Starting Dispatcher.");
 			/*TODO 创建和启动 Dispatcher => dispatcher会创建和启动JobMaster*/
+			// 通过选举 调用 onStart
 			dispatcherRunner = dispatcherRunnerFactory.createDispatcherRunner(
 				// DefaultLeaderElectionService LeaderElectionService
 				highAvailabilityServices.getDispatcherLeaderElectionService(),
@@ -212,9 +217,11 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 
 			log.debug("Starting ResourceManager.");
 			/*TODO 启动 ResourceManager*/
+			// 会给自己发一个开始消息，然后执行 ResourceManager#onStart
 			resourceManager.start();
-
+			// resourceManagerGatewayRetriever = RpcGatewayRetriever
 			resourceManagerRetrievalService.start(resourceManagerGatewayRetriever);
+			// dispatcherGatewayRetriever = RpcGatewayRetriever
 			dispatcherLeaderRetrievalService.start(dispatcherGatewayRetriever);
 
 			return new DispatcherResourceManagerComponent(

@@ -83,6 +83,7 @@ public class DefaultLeaderElectionService implements LeaderElectionService, Lead
 
 		synchronized (lock) {
 			leaderContender = contender;
+			//todo
 			leaderElectionDriver = leaderElectionDriverFactory.createLeaderElectionDriver(
 				this, new LeaderElectionFatalErrorHandler(), leaderContender.getDescription());
 			LOG.info("Starting DefaultLeaderElectionService with {}.", leaderElectionDriver);
@@ -195,7 +196,7 @@ public class DefaultLeaderElectionService implements LeaderElectionService, Lead
 						leaderContender.getDescription(),
 						issuedLeaderSessionID);
 				}
-
+				//todo  非常重要
 				leaderContender.grantLeadership(issuedLeaderSessionID);
 			} else {
 				if (LOG.isDebugEnabled()) {

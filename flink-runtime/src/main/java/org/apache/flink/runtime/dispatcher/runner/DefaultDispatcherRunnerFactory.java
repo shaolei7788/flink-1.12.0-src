@@ -56,6 +56,7 @@ public class DefaultDispatcherRunnerFactory implements DispatcherRunnerFactory {
 			fatalErrorHandler);
 		//todo
 		return DefaultDispatcherRunner.create(
+			//DefaultLeaderElectionService
 			leaderElectionService,
 			fatalErrorHandler,
 			dispatcherLeaderProcessFactory);

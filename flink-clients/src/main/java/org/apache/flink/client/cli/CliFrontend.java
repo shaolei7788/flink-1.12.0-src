@@ -214,7 +214,6 @@ public class CliFrontend {
 	 */
 	protected void run(String[] args) throws Exception {
 		LOG.info("Running 'run' command.");
-
 		/*TODO 获取run动作，默认的配置项*/
 		final Options commandOptions = CliFrontendParser.getRunCommandOptions();
 
@@ -240,25 +239,25 @@ public class CliFrontend {
 		/*TODO 获取有效配置：HA的id、Target（session、per-job）、JobManager内存、TaskManager内存、每个TM的slot数...*/
 		//    effectiveConfiguration =
 		//        confData = {HashMap@3448}  size = 14
-		//        "taskmanager.memory.process.size" -> "1728m"
 		//        "jobmanager.execution.failover-strategy" -> "region"
 		//        "jobmanager.rpc.address" -> "localhost"
-		//        "execution.target" -> "yarn-per-job"
 		//        "jobmanager.memory.process.size" -> "1600m"
 		//        "jobmanager.rpc.port" -> "6123"
+		//        "taskmanager.memory.process.size" -> "1728m"
+		//        "taskmanager.numberOfTaskSlots" -> "1"
+		//        "execution.target" -> "yarn-per-job"
 		//        "execution.savepoint.ignore-unclaimed-state" -> {Boolean@3477} false
 		//        "execution.attached" -> {Boolean@3479} true
 		//        "execution.shutdown-on-attached-exit" -> {Boolean@3477} false
 		//        "pipeline.jars" -> {ArrayList@3482}  size = 1
 		//        "parallelism.default" -> "1"
-		//        "taskmanager.numberOfTaskSlots" -> "1"
 		//        "pipeline.classpaths" -> {ArrayList@3488}  size = 0
 		//        "$internal.deployment.config-dir" -> "/opt/flink-1.12.2/conf"
 		final Configuration effectiveConfiguration = getEffectiveConfiguration(
 				activeCommandLine, commandLine, programOptions, jobJars);
 
 		LOG.debug("Effective executor configuration: {}", effectiveConfiguration);
-
+		//创建包程序对象
 		final PackagedProgram program = getPackagedProgram(programOptions, effectiveConfiguration);
 
 		try {
@@ -778,6 +777,44 @@ public class CliFrontend {
 	// --------------------------------------------------------------------------------------------
 
 	protected void executeProgram(final Configuration configuration, final PackagedProgram program) throws ProgramInvocationException {
+		//  configuration 相关的配置信息.....
+		//    configuration = {Configuration@3126} "{env.java.opts.client=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5666, jobmanager.webapp.authentication.type=simple, taskmanager.memory.process.size=1728m, jobmanager.execution.failover-strategy=region, jobmanager.rpc.address=localhost, execution.target=yarn-per-job, jobmanager.memory.process.size=1600m, security.kerberos.login.use-ticket-cache=true, jobmanager.rpc.port=6123, jobmanager.webapp.authentication.kerberos.keytab=/opt/keytab/HTTP.keytab, security.kerberos.login.principal=yarn/henghe-030@HENGHE.COM, sun.security.krb5.debug=true, jobmanager.webapp.authentication.kerberos.principal=HTTP/henghe-030@HENGHE.COM, execution.savepoint.ignore-unclaimed-state=false, execution.attached=true, execution.shutdown-on-attached-exit=false, pipeline.jars=[file:/opt/tools/flink-1.12.0/examples/streaming/SocketWindowWordCount.jar], parallelism.default=1, taskmanager.numberOfTaskSlots=1, pipeline.classpaths=[], security.kerberos.login.keytab=/opt/keytab/yarn.keytab, $internal.d"
+		//        confData = {HashMap@3129}  size = 22
+		//            "env.java.opts.client" -> "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5666"
+		//            "jobmanager.webapp.authentication.type" -> "simple"
+		//            "taskmanager.memory.process.size" -> "1728m"
+		//            "jobmanager.execution.failover-strategy" -> "region"
+		//            "jobmanager.rpc.address" -> "localhost"
+		//            "execution.target" -> "yarn-per-job"
+		//            "jobmanager.memory.process.size" -> "1600m"
+		//            "security.kerberos.login.use-ticket-cache" -> "true"
+		//            "jobmanager.rpc.port" -> "6123"
+		//            "jobmanager.webapp.authentication.kerberos.keytab" -> "/opt/keytab/HTTP.keytab"
+		//            "security.kerberos.login.principal" -> "yarn/henghe-030@HENGHE.COM"
+		//            "sun.security.krb5.debug" -> "true"
+		//            "jobmanager.webapp.authentication.kerberos.principal" -> "HTTP/henghe-030@HENGHE.COM"
+		//            "execution.savepoint.ignore-unclaimed-state" -> {Boolean@3181} false
+		//            "execution.attached" -> {Boolean@3183} true
+		//            "execution.shutdown-on-attached-exit" -> {Boolean@3181} false
+		//            "pipeline.jars" -> {ArrayList@3186}  size = 1
+		//            "parallelism.default" -> "1"
+		//            "taskmanager.numberOfTaskSlots" -> "1"
+		//            "pipeline.classpaths" -> {ArrayList@3192}  size = 0
+		//            "security.kerberos.login.keytab" -> "/opt/keytab/yarn.keytab"
+		//            "$internal.deployment.config-dir" -> "/opt/tools/flink-1.12.0/conf"
+
+		//----------------------------------------------
+
+		//  program 相关的配置信息.....
+		//    program = {PackagedProgram@3127}
+		//        jarFile = {URL@3197} "file:/opt/tools/flink-1.12.0/examples/streaming/SocketWindowWordCount.jar"
+		//        args = {String[4]@3198} ["--hostname", "192.168.xx.xx", "--port", "9999"]
+		//        mainClass = {Class@3123} "class org.apache.flink.streaming.examples.socket.SocketWindowWordCount"
+		//        extractedTempLibraries = {Collections$EmptyList@3199}  size = 0
+		//        classpaths = {ArrayList@3200}  size = 0
+		//        userCodeClassLoader = {FlinkUserCodeClassLoaders$SafetyNetWrapperClassLoader@3201}
+		//        savepointSettings = {SavepointRestoreSettings@3202} "SavepointRestoreSettings.none()"
+		//        isPython = false
 		ClientUtils.executeProgram(new DefaultExecutorServiceLoader(), configuration, program, false, false);
 	}
 
@@ -994,16 +1031,6 @@ public class CliFrontend {
 			System.out.println("Please specify an action.");
 			return 1;
 		}
-		/**
-		 * // actions
-		 *     private static final String ACTION_RUN = "run";
-		 *     private static final String ACTION_RUN_APPLICATION = "run-application";
-		 *     private static final String ACTION_INFO = "info";
-		 *     private static final String ACTION_LIST = "list";
-		 *     private static final String ACTION_CANCEL = "cancel";
-		 *     private static final String ACTION_STOP = "stop";
-		 *     private static final String ACTION_SAVEPOINT = "savepoint";
-		 */
 		// 获取动作
 		String action = args[0];
 		// remove action from parameters
@@ -1107,18 +1134,22 @@ public class CliFrontend {
 		final Configuration configuration = GlobalConfiguration.loadConfiguration(configurationDirectory);
 
 		// 3. load the custom command lines
-		// 构建CliFrontend   : GenericCLI > flinkYarnSessionCLI > DefaultCLI
+		//todo 加载自定义命令行集合  依次添加: GenericCLI > flinkYarnSessionCLI > DefaultCLI
+		//  Yarn-per-job 会是 GenericCLI
 		final List<CustomCommandLine> customCommandLines = loadCustomCommandLines(configuration, configurationDirectory);
 
 		try {
+			//创建CliFrontend对象
 			final CliFrontend cli = new CliFrontend(
 				configuration,
 				customCommandLines);
 
 			SecurityUtils.install(new SecurityConfiguration(cli.configuration));
 			// 使用parseAndRun 提交指令
-			int retCode = SecurityUtils.getInstalledContext()
-					.runSecured(() -> cli.parseAndRun(args));
+			int retCode = SecurityUtils.getInstalledContext().runSecured(
+				//todo
+				() -> cli.parseAndRun(args)
+			);
 			System.exit(retCode);
 		}
 		catch (Throwable t) {

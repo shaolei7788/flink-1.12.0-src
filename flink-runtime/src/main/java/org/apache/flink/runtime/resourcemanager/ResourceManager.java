@@ -215,7 +215,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	@Override
 	public final void onStart() throws Exception {
 		try {
-			// 启动 ResourceManager Service
+			//todo 启动 ResourceManager Service
 			startResourceManagerServices();
 		} catch (Throwable t) {
 			final ResourceManagerException exception = new ResourceManagerException(String.format("Could not start the ResourceManager %s", getAddress()), t);
@@ -227,9 +227,12 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	// 启动 Resource Manager
 	private void startResourceManagerServices() throws Exception {
 		try {
+			// leaderElectionService = DefaultLeaderElectionService
 			leaderElectionService = highAvailabilityServices.getResourceManagerLeaderElectionService();
 
 			/*TODO 创建了Yarn的RM和NM的客户端，初始化并启动*/
+			//1 创建Yarn的ResourceManager的客户端，并且初始化和启动
+			//2 创建yarn的 NodeManager的客户端，并且初始化和启动
 			initialize();
 
 			/*TODO 通过选举服务，启动ResourceManager*/
@@ -1020,7 +1023,10 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	@Override
 	public void grantLeadership(final UUID newLeaderSessionID) {
 		final CompletableFuture<Boolean> acceptLeadershipFuture = clearStateFuture
-			.thenComposeAsync((ignored) -> tryAcceptLeadership(newLeaderSessionID), getUnfencedMainThreadExecutor());
+			.thenComposeAsync(
+				//todo
+				(ignored) -> tryAcceptLeadership(newLeaderSessionID), getUnfencedMainThreadExecutor()
+			);
 
 		final CompletableFuture<Void> confirmationFuture = acceptLeadershipFuture.thenAcceptAsync(
 			(acceptLeadership) -> {
@@ -1051,7 +1057,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			}
 
 			setFencingToken(newResourceManagerId);
-
+			//启动服务
 			startServicesOnLeadership();
 
 			return prepareLeadershipAsync().thenApply(ignored -> true);
@@ -1065,6 +1071,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		startHeartbeatServices();
 
 		/*TODO 启动slotManager*/
+		// SlotManagerImpl#start
 		slotManager.start(getFencingToken(), getMainThreadExecutor(), new ResourceActionsImpl());
 
 		onLeadership();

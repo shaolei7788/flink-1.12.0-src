@@ -73,7 +73,7 @@ public class YarnJobClusterEntrypoint extends JobClusterEntrypoint {
 	protected DefaultDispatcherResourceManagerComponentFactory createDispatcherResourceManagerComponentFactory(Configuration configuration) throws IOException {
 		//todo
 		return DefaultDispatcherResourceManagerComponentFactory.createJobComponentFactory(
-			//YarnResourceManagerFactory
+			//YarnResourceManagerFactory extends ActiveResourceManagerFactory
 			YarnResourceManagerFactory.getInstance(),
 			FileJobGraphRetriever.createFrom(
 					configuration,
@@ -113,7 +113,7 @@ public class YarnJobClusterEntrypoint extends JobClusterEntrypoint {
 		final Configuration configuration = YarnEntrypointUtils.loadConfiguration(workingDirectory, dynamicParameters, env);
 		// 2.构建YarnJobClusterEntrypoint
 		YarnJobClusterEntrypoint yarnJobClusterEntrypoint = new YarnJobClusterEntrypoint(configuration);
-		// 3.启动
+		//todo 3.启动
 		ClusterEntrypoint.runClusterEntrypoint(yarnJobClusterEntrypoint);
 	}
 }

@@ -101,6 +101,7 @@ public enum ClientUtils {
 
 			/*TODO 配置环境的上下文，用户代码里的 getExecutionEnvironment就会拿到这些环境信息*/
 			ContextEnvironment.setAsContext(
+				//DefaultExecutorServiceLoader
 				executorServiceLoader,
 				configuration,
 				userCodeClassLoader,
@@ -116,7 +117,7 @@ public enum ClientUtils {
 				suppressSysout);
 
 			try {
-				// 通过反射的方式, 调用用户程序的mian方法
+				//todo 通过反射的方式, 调用用户程序的mian方法
 				program.invokeInteractiveModeForExecution();
 			} finally {
 				ContextEnvironment.unsetAsContext();

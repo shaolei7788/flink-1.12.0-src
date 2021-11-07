@@ -118,6 +118,7 @@ public class ActiveResourceManager<WorkerType extends ResourceIDRetrievable>
 	@Override
 	protected void initialize() throws ResourceManagerException {
 		try {
+			//todo
 			resourceManagerDriver.initialize(
 					this,
 					new GatewayMainThreadExecutor(),

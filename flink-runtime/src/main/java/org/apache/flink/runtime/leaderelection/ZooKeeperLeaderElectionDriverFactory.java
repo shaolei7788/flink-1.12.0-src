@@ -41,6 +41,7 @@ public class ZooKeeperLeaderElectionDriverFactory implements LeaderElectionDrive
 
 	@Override
 	public ZooKeeperLeaderElectionDriver createLeaderElectionDriver(
+			// LeaderElectionFatalErrorHandler
 			LeaderElectionEventHandler leaderEventHandler,
 			FatalErrorHandler fatalErrorHandler,
 			String leaderContenderDescription) throws Exception {

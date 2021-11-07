@@ -259,6 +259,7 @@ public class StreamGraphGenerator {
 
 		/*TODO transformations是一个list，依次存放了 用户代码里的 算子*/
 		for (Transformation<?> transformation: transformations) {
+			// Function > Operator > Transformation > StreamNode
 			transform(transformation);
 		}
 
@@ -363,12 +364,12 @@ public class StreamGraphGenerator {
 	 * delegates to one of the transformation specific methods.
 	 */
 	private Collection<Integer> transform(Transformation<?> transform) {
+		// alreadyTransformed 存放已经转换过的Transformation
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
 		}
 
 		LOG.debug("Transforming " + transform);
-
 		if (transform.getMaxParallelism() <= 0) {
 			// if the max parallelism hasn't been set, then first use the job wide max parallelism
 			// from the ExecutionConfig.
@@ -384,14 +385,13 @@ public class StreamGraphGenerator {
 		@SuppressWarnings("unchecked")
 		final TransformationTranslator<?, Transformation<?>> translator =
 				(TransformationTranslator<?, Transformation<?>>) translatorMap.get(transform.getClass());
-
 		Collection<Integer> transformedIds;
 		if (translator != null) {
+			//todo
 			transformedIds = translate(translator, transform);
 		} else {
 			transformedIds = legacyTransform(transform);
 		}
-
 		// need this check because the iterate transformation adds itself before
 		// transforming the feedback edges
 		if (!alreadyTransformed.containsKey(transform)) {
@@ -627,6 +627,7 @@ public class StreamGraphGenerator {
 
 		return shouldExecuteInBatchMode
 				? translator.translateForBatch(transform, context)
+				//todo
 				: translator.translateForStreaming(transform, context);
 	}
 

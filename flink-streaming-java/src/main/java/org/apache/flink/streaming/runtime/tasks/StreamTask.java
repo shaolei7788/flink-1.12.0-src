@@ -289,6 +289,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		this.configuration = new StreamConfig(getTaskConfiguration());
 		this.recordWriter = createRecordWriterDelegate(configuration, environment);
 		this.actionExecutor = Preconditions.checkNotNull(actionExecutor);
+		//todo
 		this.mailboxProcessor = new MailboxProcessor(this::processInput, mailbox, actionExecutor);
 		this.mailboxProcessor.initMetric(environment.getMetricGroup());
 		this.mainMailboxExecutor = mailboxProcessor.getMainMailboxExecutor();
@@ -369,6 +370,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * @throws Exception on any problems in the action.
 	 */
 	protected void processInput(MailboxDefaultAction.Controller controller) throws Exception {
+		//如果的map算子  StreamOneInputProcessor#processInput
 		InputStatus status = inputProcessor.processInput();
 		if (status == InputStatus.MORE_AVAILABLE && recordWriter.isAvailable()) {
 			return;

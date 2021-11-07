@@ -111,6 +111,7 @@ public class AkkaRpcService implements RpcService {
 
 	private final CompletableFuture<Void> terminationFuture;
 
+	// 包装了要给ActorRef
 	private final Supervisor supervisor;
 
 	private volatile boolean stopped;
@@ -141,14 +142,14 @@ public class AkkaRpcService implements RpcService {
 		terminationFuture = new CompletableFuture<>();
 
 		stopped = false;
-
+		//里面会创建ActorRef
 		supervisor = startSupervisorActor();
 	}
 
 	private Supervisor startSupervisorActor() {
 		final ExecutorService terminationFutureExecutor = Executors.newSingleThreadExecutor(new ExecutorThreadFactory("AkkaRpcService-Supervisor-Termination-Future-Executor"));
+		//todo
 		final ActorRef actorRef = SupervisorActor.startSupervisorActor(actorSystem, terminationFutureExecutor);
-
 		return Supervisor.create(actorRef, terminationFutureExecutor);
 	}
 

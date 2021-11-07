@@ -634,10 +634,9 @@ public class DataStream<T> {
 	 * @return The transformed {@link DataStream}.
 	 */
 	public <R> SingleOutputStreamOperator<R> flatMap(FlatMapFunction<T, R> flatMapper) {
-
+		//获取类型信息
 		TypeInformation<R> outType = TypeExtractor.getFlatMapReturnTypes(clean(flatMapper),
 				getType(), Utils.getCallLocationName(), true);
-
 		return flatMap(flatMapper, outType);
 	}
 
@@ -659,6 +658,7 @@ public class DataStream<T> {
 	 * @return The transformed {@link DataStream}.
 	 */
 	public <R> SingleOutputStreamOperator<R> flatMap(FlatMapFunction<T, R> flatMapper, TypeInformation<R> outputType) {
+		//将FlatMapFunction 转换为 StreamFlatMap (StreamFlatMap extends AbstractUdfStreamOperator)
 		return transform("Flat Map", outputType, new StreamFlatMap<>(clean(flatMapper)));
 
 	}
@@ -1249,6 +1249,7 @@ public class DataStream<T> {
 	protected <R> SingleOutputStreamOperator<R> doTransform(
 			String operatorName,
 			TypeInformation<R> outTypeInfo,
+			// SimpleOperatorFactory
 			StreamOperatorFactory<R> operatorFactory) {
 
 		// read the output type of the input Transform to coax out errors about MissingTypeInfo
@@ -1263,7 +1264,7 @@ public class DataStream<T> {
 
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		SingleOutputStreamOperator<R> returnStream = new SingleOutputStreamOperator(environment, resultTransform);
-		//todo 添加
+		//todo 添加到transformations
 		getExecutionEnvironment().addOperator(resultTransform);
 
 		return returnStream;

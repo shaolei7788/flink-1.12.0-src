@@ -53,9 +53,9 @@
         <module name="flink-ml-api" />
         <module name="flink-orc_2.11" />
         <module name="flink-sql-avro-confluent-registry" />
-        <module name="flink-python-test_2.11" />
         <module name="flink-metrics-core" />
         <module name="flink-connector-hbase-base_2.11" />
+        <module name="flink-sql-parquet_2.11" />
         <module name="flink-sql-connector-kinesis_2.11" />
         <module name="flink-connector-hbase-2.2_2.11" />
         <module name="flink-connector-twitter_2.11" />
@@ -151,7 +151,7 @@
         <module name="flink-tests" />
         <module name="flink-end-to-end-tests-common" />
         <module name="flink-metrics-statsd" />
-        <module name="flink-sql-parquet_2.11" />
+        <module name="flink-python-test_2.11" />
         <module name="flink-table-api-scala-bridge_2.11" />
         <module name="flink-table-planner-blink_2.11" />
         <module name="flink-elasticsearch5-test" />
