@@ -138,7 +138,7 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 		this.leaderGatewayFuture = new CompletableFuture<>();
 
 		// now start the JobManager
-		//创建 JobMaster
+		//todo 创建 JobMasterService DefaultJobMasterServiceFactory#createJobMasterService
 		this.jobMasterService = jobMasterFactory.createJobMasterService(jobGraph, this, userCodeLoader, initializationTimestamp);
 	}
 
@@ -266,7 +266,7 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 	//----------------------------------------------------------------------------------------------
 	// Leadership methods
 	//----------------------------------------------------------------------------------------------
-
+	//todo 开始job的执行，会发送rpc请求让TaskManager执行Task
 	@Override
 	public void grantLeadership(final UUID leaderSessionID) {
 		synchronized (lock) {
@@ -278,7 +278,7 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 			leadershipOperation = leadershipOperation.thenCompose(
 				(ignored) -> {
 					synchronized (lock) {
-						//todo
+						//todo 鉴别JobScheduling状态 并 开始JobManager 开始job的执行，会发送rpc请求让TaskManager执行Task
 						return verifyJobSchedulingStatusAndStartJobManager(leaderSessionID);
 					}
 				});
@@ -288,14 +288,17 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 	}
 
 	private CompletableFuture<Void> verifyJobSchedulingStatusAndStartJobManager(UUID leaderSessionId) {
+		//获取jobSchedulingStatusFuture
 		final CompletableFuture<JobSchedulingStatus> jobSchedulingStatusFuture = getJobSchedulingStatus();
 
 		return jobSchedulingStatusFuture.thenCompose(
 			jobSchedulingStatus -> {
+				//根据jobSchedulingStatusFuture的状态判断
 				if (jobSchedulingStatus == JobSchedulingStatus.DONE) {
+					//完成
 					return jobAlreadyDone();
 				} else {
-					//todo
+					//todo  开始job的执行，会发送rpc请求让TaskManager执行Task
 					return startJobMaster(leaderSessionId);
 				}
 			});
@@ -306,6 +309,8 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 			jobGraph.getName(), jobGraph.getJobID(), leaderSessionId, jobMasterService.getAddress());
 
 		try {
+			// runningJobsRegistry = ZooKeeperRunningJobsRegistry
+			// 当JobMaster 启动好之后，更改Job状态为Running 保存到ZK
 			runningJobsRegistry.setJobRunning(jobGraph.getJobID());
 		} catch (IOException e) {
 			return FutureUtils.completedExceptionally(
@@ -316,7 +321,7 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 
 		final CompletableFuture<Acknowledge> startFuture;
 		try {
-			//TODO jobMasterService = JobMaster
+			//TODO jobMasterService = JobMaster 开始job的执行，会发送rpc请求让TaskManager执行Task
 			startFuture = jobMasterService.start(new JobMasterId(leaderSessionId));
 		} catch (Exception e) {
 			return FutureUtils.completedExceptionally(new FlinkException("Failed to start the JobMaster.", e));

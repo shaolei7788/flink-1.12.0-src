@@ -231,11 +231,16 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			leaderElectionService = highAvailabilityServices.getResourceManagerLeaderElectionService();
 
 			/*TODO 创建了Yarn的RM和NM的客户端，初始化并启动*/
-			//1 创建Yarn的ResourceManager的客户端，并且初始化和启动
-			//2 创建yarn的 NodeManager的客户端，并且初始化和启动
+			// 1 创建Yarn的ResourceManager的客户端，并且初始化和启动
+			// 2 创建yarn的 NodeManager的客户端，并且初始化和启动
+			// ActiveResourceManager#initialize
+			// 里面会显式指定TaskManager运行的类即   YarnTaskExecutorRunner
 			initialize();
 
 			/*TODO 通过选举服务，启动ResourceManager*/
+			// 最后会调用 ResourceManager#grantLeadership
+			// 	 1 启动心跳服务：TaskManager、JobMaster
+			// 	 2 启动slotManager
 			leaderElectionService.start(this);
 
 			jobLeaderIdService.start(new JobLeaderIdActionsImpl());
@@ -431,7 +436,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		final WorkerRegistration<WorkerType> workerTypeWorkerRegistration = taskExecutors.get(taskManagerResourceId);
 		if (workerTypeWorkerRegistration.getInstanceID().equals(taskManagerRegistrationId)) {
 			// 向 slotManager 注册 slot 信息
-			// SlotManagerImpl#registerTaskManager
+			//todo SlotManagerImpl#registerTaskManager
 			if (slotManager.registerTaskManager(workerTypeWorkerRegistration, slotReport)) {
 				// 注册完成之后的操作
 				onWorkerRegistered(workerTypeWorkerRegistration.getWorker());
@@ -1232,6 +1237,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		@Override
 		public boolean allocateResource(WorkerResourceSpec workerResourceSpec) {
 			validateRunsInMainThread();
+			//todo
 			return startNewWorker(workerResourceSpec);
 		}
 

@@ -215,8 +215,9 @@ public class SlotPoolImpl implements SlotPool {
 		this.jobMasterId = jobMasterId;
 		this.jobManagerAddress = newJobManagerAddress;
 		this.componentMainThreadExecutor = componentMainThreadExecutor;
-
+		//检查空闲的Slot
 		scheduleRunAsync(this::checkIdleSlot, idleSlotTimeout);
+		//检查批Slot超时
 		scheduleRunAsync(this::checkBatchSlotTimeout, batchSlotTimeout);
 
 		if (log.isDebugEnabled()) {

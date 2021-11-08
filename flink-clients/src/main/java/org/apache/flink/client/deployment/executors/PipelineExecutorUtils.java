@@ -49,10 +49,10 @@ public class PipelineExecutorUtils {
 	public static JobGraph getJobGraph(@Nonnull final Pipeline pipeline, @Nonnull final Configuration configuration) throws MalformedURLException {
 		checkNotNull(pipeline);
 		checkNotNull(configuration);
-
+		// pipeline = StreamGraph
 		final ExecutionConfigAccessor executionConfigAccessor = ExecutionConfigAccessor.fromConfiguration(configuration);
-		final JobGraph jobGraph = FlinkPipelineTranslationUtil
-				.getJobGraph(pipeline, configuration, executionConfigAccessor.getParallelism());
+		//todo 将StreamGraph 转化为JobGraph
+		final JobGraph jobGraph = FlinkPipelineTranslationUtil.getJobGraph(pipeline, configuration, executionConfigAccessor.getParallelism());
 
 		configuration
 				.getOptional(PipelineOptionsInternal.PIPELINE_FIXED_JOB_ID)

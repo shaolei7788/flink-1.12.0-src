@@ -196,7 +196,9 @@ public class DefaultLeaderElectionService implements LeaderElectionService, Lead
 						leaderContender.getDescription(),
 						issuedLeaderSessionID);
 				}
-				//todo  非常重要
+				//todo  非常重要   JobManagerRunnerImpl#grantLeadership
+				//todo  非常重要   ResourceManager#grantLeadership
+				//todo  非常重要   DefaultDispatcherRunner#grantLeadership
 				leaderContender.grantLeadership(issuedLeaderSessionID);
 			} else {
 				if (LOG.isDebugEnabled()) {

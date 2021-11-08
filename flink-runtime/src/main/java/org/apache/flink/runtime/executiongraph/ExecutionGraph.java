@@ -817,7 +817,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		final ArrayList<ExecutionJobVertex> newExecJobVertices = new ArrayList<>(topologiallySorted.size());
 		final long createTimestamp = System.currentTimeMillis();
 
-		// 遍历Job Vertex
+		// 遍历Job Vertex，执行并行生成ExecutionVertex
 		for (JobVertex jobVertex : topologiallySorted) {
 
 			if (jobVertex.isInputVertex() && !jobVertex.isStoppable()) {
@@ -858,12 +858,9 @@ public class ExecutionGraph implements AccessExecutionGraph {
 			/*TODO 将当前执⾏图节点加⼊到图中*/
 			newExecJobVertices.add(ejv);
 		}
-
 		// the topology assigning should happen before notifying new vertices to failoverStrategy
 		executionTopology = DefaultExecutionTopology.fromExecutionGraph(this);
-
 		failoverStrategy.notifyNewVertices(newExecJobVertices);
-
 		partitionReleaseStrategy = partitionReleaseStrategyFactory.createInstance(getSchedulingTopology());
 	}
 

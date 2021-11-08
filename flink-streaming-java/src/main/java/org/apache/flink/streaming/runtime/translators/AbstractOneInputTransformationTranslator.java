@@ -86,8 +86,10 @@ abstract class AbstractOneInputTransformationTranslator<IN, OUT, OP extends Tran
 			parentTransformations.size() == 1,
 			"Expected exactly one input transformation but found " + parentTransformations.size());
 
-		/*TODO 添加StreamEdge*/
+		//todo  添加StreamEdge
 		for (Integer inputId: context.getStreamNodeIds(parentTransformations.get(0))) {
+			//todo 设置当前StreamNode和上游所有StreamNode之间的StreamEdge
+			// inputId 父id,transformationId 当前id
 			streamGraph.addEdge(inputId, transformationId, 0);
 		}
 

@@ -91,6 +91,9 @@ public abstract class RegisteredRpcConnection<F extends Serializable, G extends 
 		checkState(!isConnected() && pendingRegistration == null, "The RPC connection is already started");
 
 		/*TODO 创建注册对象*/
+		// 返回的结果是
+		// TaskExecutor注册 返回TaskExecutorToResouceManagerConnection.ResourceManagerRegistration
+		// JobMaster注册 返回 DefaultJobLeaderService.JobManagerRetryingRegistration
 		final RetryingRegistration<F, G, S> newRegistration = createNewRegistration();
 
 		if (REGISTRATION_UPDATER.compareAndSet(this, null, newRegistration)) {
@@ -224,7 +227,9 @@ public abstract class RegisteredRpcConnection<F extends Serializable, G extends 
 	// ------------------------------------------------------------------------
 
 	private RetryingRegistration<F, G, S> createNewRegistration() {
-		// 生成注册 : JobMaster: generateRegistration 方法  TaskExecutorToResourceManagerConnection#generateRegistration
+		// 生成注册 : JobMaster: generateRegistration 方法
+		// TaskExecutorToResourceManagerConnection#generateRegistration
+		// ResourceManagerConnection#generateRegistration
 		RetryingRegistration<F, G, S> newRegistration = checkNotNull(generateRegistration());
 
 		CompletableFuture<Tuple2<G, S>> future = newRegistration.getFuture();

@@ -59,6 +59,7 @@ public final class OneInputTransformationTranslator<IN, OUT>
 	public Collection<Integer> translateForStreamingInternal(
 			final OneInputTransformation<IN, OUT> transformation,
 			final Context context) {
+		//todo 内部转换
 		return translateInternal(transformation,
 			transformation.getOperatorFactory(),
 			transformation.getInputType(),

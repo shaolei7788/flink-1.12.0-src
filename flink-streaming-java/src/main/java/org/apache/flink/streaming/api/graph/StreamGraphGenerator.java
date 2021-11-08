@@ -626,8 +626,9 @@ public class StreamGraphGenerator {
 				this, streamGraph, slotSharingGroup, configuration);
 
 		return shouldExecuteInBatchMode
+				//转换批
 				? translator.translateForBatch(transform, context)
-				//todo
+				//todo 转换流 SimpleTransformationTranslator#translateForStreaming
 				: translator.translateForStreaming(transform, context);
 	}
 

@@ -1112,6 +1112,14 @@ public class CliFrontend {
 	 * 版权声明：本文为CSDN博主「张伯毅」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
 	 * 原文链接：https://blog.csdn.net/zhanglong_4444/article/details/114675925
 	 *
+	 *
+	 * -n(--container)： TaskManager 的数量。
+	 * -s(--slots)： 每个TaskManager的slot数量，默认每个taskmanager的slot 的个数为 1
+	 * -jm： JobManager 的内存（单位 MB)。
+	 * -tm：每个 taskmanager 的内存（单位 MB)。
+	 * -nm： yarn 的 appName(现在 yarn 的 ui 上的名字)。
+	 * -d：后台执行
+	 *
 	 * @param args
 	 */
 	public static void main(final String[] args) {

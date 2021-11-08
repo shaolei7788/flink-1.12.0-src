@@ -354,7 +354,7 @@ public class StreamGraph implements Pipeline {
 			TypeInformation<OUT> outTypeInfo,
 			String operatorName,
 			Class<? extends AbstractInvokable> invokableClass) {
-
+		//todo 添加StreamNode
 		addNode(vertexID, slotSharingGroup, coLocationGroup, invokableClass, operatorFactory, operatorName);
 		setSerializers(vertexID, createSerializer(inTypeInfo), null, createSerializer(outTypeInfo));
 
@@ -436,7 +436,7 @@ public class StreamGraph implements Pipeline {
 		if (streamNodes.containsKey(vertexID)) {
 			throw new RuntimeException("Duplicate vertexID " + vertexID);
 		}
-
+		//todo 创建StreamNode
 		StreamNode vertex = new StreamNode(
 				vertexID,
 				slotSharingGroup,
@@ -595,6 +595,8 @@ public class StreamGraph implements Pipeline {
 				partitioner, outputTag, shuffleMode);
 
 			/*TODO 将该 StreamEdge 添加到上游的输出，下游的输入*/
+			// 指定getSourceId 添加出边
+			// 指定getTargetId 添加入边
 			getStreamNode(edge.getSourceId()).addOutEdge(edge);
 			getStreamNode(edge.getTargetId()).addInEdge(edge);
 		}
@@ -865,6 +867,7 @@ public class StreamGraph implements Pipeline {
 	 * Gets the assembled {@link JobGraph} with a specified {@link JobID}.
 	 */
 	public JobGraph getJobGraph(@Nullable JobID jobID) {
+		//todo
 		return StreamingJobGraphGenerator.createJobGraph(this, jobID);
 	}
 

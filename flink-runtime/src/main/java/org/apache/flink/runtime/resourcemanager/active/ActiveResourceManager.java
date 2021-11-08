@@ -118,7 +118,7 @@ public class ActiveResourceManager<WorkerType extends ResourceIDRetrievable>
 	@Override
 	protected void initialize() throws ResourceManagerException {
 		try {
-			//todo
+			//todo 启动TaskManager
 			resourceManagerDriver.initialize(
 					this,
 					new GatewayMainThreadExecutor(),
@@ -159,6 +159,7 @@ public class ActiveResourceManager<WorkerType extends ResourceIDRetrievable>
 
 	@Override
 	public boolean startNewWorker(WorkerResourceSpec workerResourceSpec) {
+		//todo
 		requestNewWorker(workerResourceSpec);
 		return true;
 	}
@@ -230,6 +231,7 @@ public class ActiveResourceManager<WorkerType extends ResourceIDRetrievable>
 	// ------------------------------------------------------------------------
 
 	private void requestNewWorker(WorkerResourceSpec workerResourceSpec) {
+		//从flinkConfig中获取taskExecutor配置
 		final TaskExecutorProcessSpec taskExecutorProcessSpec =
 				TaskExecutorProcessUtils.processSpecFromWorkerResourceSpec(flinkConfig, workerResourceSpec);
 		final int pendingCount = pendingWorkerCounter.increaseAndGet(workerResourceSpec);
@@ -237,7 +239,7 @@ public class ActiveResourceManager<WorkerType extends ResourceIDRetrievable>
 		log.info("Requesting new worker with resource spec {}, current pending count: {}.",
 				workerResourceSpec,
 				pendingCount);
-
+		//todo 申请资源
 		CompletableFuture<WorkerType> requestResourceFuture = resourceManagerDriver.requestResource(taskExecutorProcessSpec);
 		FutureUtils.assertNoException(
 				requestResourceFuture.handle((worker, exception) -> {

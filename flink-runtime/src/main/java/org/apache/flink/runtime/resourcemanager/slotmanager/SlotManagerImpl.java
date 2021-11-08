@@ -291,6 +291,7 @@ public class SlotManagerImpl implements SlotManager {
 
 		taskManagerTimeoutsAndRedundancyCheck = scheduledExecutor.scheduleWithFixedDelay(
 			() -> mainThreadExecutor.execute(
+				//todo
 				() -> checkTaskManagerTimeoutsAndRedundancy()),
 			0L,
 			taskManagerTimeout.toMilliseconds(),
@@ -298,6 +299,7 @@ public class SlotManagerImpl implements SlotManager {
 
 		slotRequestTimeoutCheck = scheduledExecutor.scheduleWithFixedDelay(
 			() -> mainThreadExecutor.execute(
+				//todo
 				() -> checkSlotRequestTimeouts()),
 			0L,
 			slotRequestTimeout.toMilliseconds(),
@@ -448,9 +450,9 @@ public class SlotManagerImpl implements SlotManager {
 		LOG.debug("Registering TaskManager {} under {} at the SlotManager.", taskExecutorConnection.getResourceID().getStringWithMetadata(), taskExecutorConnection.getInstanceID());
 
 		// we identify task managers by their instance id
-		// 我们通过任务管理器的实例id来识别它们
+		// 通过实例 id 判断某个 taskmanager 是否已经注册过
 		if (taskManagerRegistrations.containsKey(taskExecutorConnection.getInstanceID())) {
-			// 之间已经连接过, 直接报搞slot的状态.
+			// 报告已注册过的 taskmanager 的 slot 分配情况，更新 slot 情况
 			reportSlotStatus(taskExecutorConnection.getInstanceID(), initialSlotReport);
 			return false;
 		} else {
@@ -476,7 +478,7 @@ public class SlotManagerImpl implements SlotManager {
 
 			// next register the new slots
 			for (SlotStatus slotStatus : initialSlotReport) {
-				// 开始注册slots
+				//todo 注册新的 slot，根据 slot 请求进行分配
 				registerSlot(
 					slotStatus.getSlotID(),
 					slotStatus.getAllocationID(),
@@ -941,6 +943,7 @@ public class SlotManagerImpl implements SlotManager {
 	}
 
 	private void allocateRedundantTaskManagers(int number) {
+		//todo
 		int allocatedNumber = allocateResources(number);
 		if (number != allocatedNumber) {
 			LOG.warn("Expect to allocate {} taskManagers. Actually allocate {} taskManagers.", number, allocatedNumber);
@@ -955,6 +958,7 @@ public class SlotManagerImpl implements SlotManager {
 	private int allocateResources(int workerNum) {
 		int allocatedWorkerNum = 0;
 		for (int i = 0; i < workerNum; ++i) {
+			//todo
 			if (allocateResource(defaultSlotResourceProfile).isPresent()) {
 				++allocatedWorkerNum;
 			} else {
@@ -977,7 +981,7 @@ public class SlotManagerImpl implements SlotManager {
 			// requested resource profile is unfulfillable
 			return Optional.empty();
 		}
-
+		//todo
 		if (!resourceActions.allocateResource(defaultWorkerResourceSpec)) {
 			// resource cannot be allocated
 			return Optional.empty();
@@ -1289,11 +1293,15 @@ public class SlotManagerImpl implements SlotManager {
 
 			int slotsDiff = redundantTaskManagerNum * numSlotsPerWorker - freeSlots.size();
 			if (freeSlots.size() == slots.size()) {
+				//todo 如果没有 job 在运行，释放 taskmanager
 				// No need to keep redundant taskManagers if no job is running.
 				releaseTaskExecutors(timedOutTaskManagers, timedOutTaskManagers.size());
 			} else if (slotsDiff > 0) {
+				//todo 保证随时有足够的 taskmanager
 				// Keep enough redundant taskManagers from time to time.
 				int requiredTaskManagers = MathUtils.divideRoundUp(slotsDiff, numSlotsPerWorker);
+				// Redundant 冗余的; 多余的; 被裁减的; 不需要的
+				//todo 申请TaskManager的资源
 				allocateRedundantTaskManagers(requiredTaskManagers);
 			} else {
 				// second we trigger the release resource callback which can decide upon the resource release

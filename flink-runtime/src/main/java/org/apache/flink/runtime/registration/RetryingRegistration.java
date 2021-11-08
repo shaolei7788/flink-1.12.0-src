@@ -154,7 +154,7 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 			CompletableFuture<Void> rpcGatewayAcceptFuture = rpcGatewayFuture.thenAcceptAsync(
 				(G rpcGateway) -> {
 					log.info("Resolved {} address, beginning registration", targetName);
-					// 执行注册操作
+					//todo 执行注册操作
 					register(rpcGateway, 1, retryingRegistrationConfiguration.getInitialRegistrationTimeoutMillis());
 				},
 				rpcService.getExecutor());
@@ -179,7 +179,7 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 								retryingRegistrationConfiguration.getErrorDelayMillis(),
 								strippedFailure.getMessage());
 						}
-						// 开始注册
+						//todo 开始注册
 						startRegistrationLater(retryingRegistrationConfiguration.getErrorDelayMillis());
 					}
 				},

@@ -130,7 +130,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 		final ExecutionSlotAllocatorFactory executionSlotAllocatorFactory,
 		final ExecutionDeploymentTracker executionDeploymentTracker,
 		long initializationTimestamp) throws Exception {
-
+		//todo 会创建并存储ExecutionGraph
 		super(
 			log,
 			jobGraph,
@@ -340,7 +340,11 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 			executionVertexVersioner.recordVertexModifications(verticesToDeploy);
 
 		transitionToScheduled(verticesToDeploy);
-
+		// 1 ExecutionVertexId
+		// 2 ExecutionGraph
+		// 3 根据以上两个条件找到ExecutionVertex,然后封装成ExecutionVertexDeploymentOption
+		// ExecutionVertexDeploymentOption.size = Task 个数
+		//todo 申请slot
 		final List<SlotExecutionVertexAssignment> slotExecutionVertexAssignments =
 			allocateSlots(executionVertexDeploymentOptions);
 
@@ -348,7 +352,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 			requiredVersionByVertex,
 			deploymentOptionsByVertex,
 			slotExecutionVertexAssignments);
-
+		//todo 部署Task运行
 		waitForAllSlotsAndDeploy(deploymentHandles);
 	}
 
@@ -368,7 +372,18 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 				Function.identity()));
 	}
 
+	// ResourceManager管理slot的组件:SlotManagerImpl
+	// JobManager管理slot的组件:SlotPool
+	// slot 共享：就一个slot 执行完一个Job的task后，可以再执行其它job的Task
+
+	//todo 主要分以下四个步骤
+	// 1 JobManager 发送请求申请slot
+	// 2 ResourceManager接收到请求，执行slot请求处理
+	// 3 TaskManager处理ResourceManager发送过来的slot请求
+	// 4 JobManager接收到TaskManager发送过来的slot申请处理结果
+	// executionVertexId > ExecutionVertex > ExecutionVertexSchedulingRequirements
 	private List<SlotExecutionVertexAssignment> allocateSlots(final List<ExecutionVertexDeploymentOption> executionVertexDeploymentOptions) {
+		// DefaultExecutionSlotAllocator#allocateSlotsFor
 		return executionSlotAllocator.allocateSlotsFor(executionVertexDeploymentOptions
 			.stream()
 			.map(ExecutionVertexDeploymentOption::getExecutionVertexId)
@@ -396,6 +411,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 
 	private void waitForAllSlotsAndDeploy(final List<DeploymentHandle> deploymentHandles) {
 		FutureUtils.assertNoException(
+			//todo  deployAll
 			assignAllResources(deploymentHandles).handle(deployAll(deploymentHandles)));
 	}
 
@@ -420,6 +436,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 				checkState(slotAssigned.isDone());
 
 				FutureUtils.assertNoException(
+					//todo deployOrHandleError
 					slotAssigned.handle(deployOrHandleError(deploymentHandle)));
 			}
 			return null;
@@ -490,6 +507,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 			}
 
 			if (throwable == null) {
+				//todo
 				deployTaskSafe(executionVertexId);
 			} else {
 				handleTaskDeploymentFailure(executionVertexId, throwable);
@@ -503,6 +521,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 			// 通过执行图的节点ID获取执行图的节点
 			final ExecutionVertex executionVertex = getExecutionVertex(executionVertexId);
 			/*TODO 部署执行图节点 */
+			// DefaultExecutionVertexOperations#deploy
 			executionVertexOperations.deploy(executionVertex);
 		} catch (Throwable e) {
 			handleTaskDeploymentFailure(executionVertexId, e);

@@ -73,7 +73,7 @@ public class StreamContextEnvironment extends StreamExecutionEnvironment {
 
 	@Override
 	public JobExecutionResult execute(StreamGraph streamGraph) throws Exception {
-		//执行异步提交
+		//todo 执行异步提交streamGraph
 		final JobClient jobClient = executeAsync(streamGraph);
 		final List<JobListener> jobListeners = getJobListeners();
 		try {
@@ -126,6 +126,7 @@ public class StreamContextEnvironment extends StreamExecutionEnvironment {
 	@Override
 	public JobClient executeAsync(StreamGraph streamGraph) throws Exception {
 		validateAllowedExecution();
+		//TODO
 		final JobClient jobClient = super.executeAsync(streamGraph);
 
 		if (!suppressSysout) {

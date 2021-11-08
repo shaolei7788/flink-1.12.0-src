@@ -348,7 +348,6 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	// --------------------------------------------------------------------------------------------
 
 	public void connectSource(int inputNumber, IntermediateResult source, JobEdge edge, int consumerNumber) {
-
 		// 只有forward的方式的情况下，pattern才是 POINTWISE的，否则均为 ALL_TO_ALL
 		final DistributionPattern pattern = edge.getDistributionPattern();
 		final IntermediateResultPartition[] sourcePartitions = source.getPartitions();
@@ -685,6 +684,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	}
 
 	public void deploy() throws JobException {
+		//todo
 		currentExecution.deploy();
 	}
 

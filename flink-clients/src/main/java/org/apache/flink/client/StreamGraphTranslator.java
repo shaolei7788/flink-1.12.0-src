@@ -47,8 +47,8 @@ public class StreamGraphTranslator implements FlinkPipelineTranslator {
 			int defaultParallelism) {
 		checkArgument(pipeline instanceof StreamGraph,
 				"Given pipeline is not a DataStream StreamGraph.");
-
 		StreamGraph streamGraph = (StreamGraph) pipeline;
+		//todo 转换StreamGraph
 		return streamGraph.getJobGraph(null);
 	}
 

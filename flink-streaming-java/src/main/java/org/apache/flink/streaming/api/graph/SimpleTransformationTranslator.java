@@ -56,8 +56,9 @@ public abstract class SimpleTransformationTranslator<OUT, T extends Transformati
 		checkNotNull(context);
 
 		// 区分 map之类的转换算子（OneInput） 和 keyby值类的分区算子（partition）
+		// 如果是map  OneInputTransformationTranslator#translateForStreamingInternal
 		final Collection<Integer> transformedIds = translateForStreamingInternal(transformation, context);
-		//todo 生成StreamNode
+		//todo
 		configure(transformation, context);
 
 		return transformedIds;
@@ -109,7 +110,7 @@ public abstract class SimpleTransformationTranslator<OUT, T extends Transformati
 		if (transformation.getMinResources() != null && transformation.getPreferredResources() != null) {
 			streamGraph.setResources(transformationId, transformation.getMinResources(), transformation.getPreferredResources());
 		}
-		//创建StreamNode对象
+		//todo 获取StreamNode对象
 		final StreamNode streamNode = streamGraph.getStreamNode(transformationId);
 		if (streamNode != null
 				&& streamNode.getManagedMemoryOperatorScopeUseCaseWeights().isEmpty()

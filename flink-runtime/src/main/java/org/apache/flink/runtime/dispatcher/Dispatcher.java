@@ -236,7 +236,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	private void startRecoveredJobs() {
 		// 处理需要恢复的Job
 		for (JobGraph recoveredJob : recoveredJobs) {
-			// 处理恢复的Job
+			//todo 核心 处理恢复的Job 创建JobManagerRunner 即JobMaster
 			runRecoveredJob(recoveredJob);
 		}
 		recoveredJobs.clear();

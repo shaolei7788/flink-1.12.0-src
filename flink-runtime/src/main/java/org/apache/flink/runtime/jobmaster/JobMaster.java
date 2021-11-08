@@ -286,7 +286,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		final JobID jid = jobGraph.getJobID();
 
 		log.info("Initializing job {} ({}).", jobName, jid);
-
+		// DefaultLeaderRetrievalService
 		resourceManagerLeaderRetriever = highAvailabilityServices.getResourceManagerLeaderRetriever();
 		//todo 创建slotPoll
 		this.slotPool = checkNotNull(slotPoolFactory).createSlotPool(jid);
@@ -307,7 +307,8 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		this.shuffleMaster = checkNotNull(shuffleMaster);
 
 		this.jobManagerJobMetricGroup = jobMetricGroupFactory.create(jobGraph);
-		/*TODO 创建 调度器，创建的时候把 JobGraph转换成 ExecutionGraph*/
+		/*TODO 创建 schedulerNG调度器，创建的时候把 JobGraph转换成 ExecutionGraph*/
+		// schedulerNG = DefaultScheduler
 		this.schedulerNG = createScheduler(executionDeploymentTracker, jobManagerJobMetricGroup);
 		this.jobStatusListener = null;
 
@@ -321,6 +322,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 	private SchedulerNG createScheduler(ExecutionDeploymentTracker executionDeploymentTracker,
 										final JobManagerJobMetricGroup jobManagerJobMetricGroup) throws Exception {
+		//todo DefaultSchedulerFactory#createInstance 会创建并存储ExecutionGraph
 		return schedulerNGFactory.createInstance(
 			log,
 			jobGraph,
@@ -355,6 +357,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		// make sure we receive RPC and async calls
 		start();
 		/*TODO 异步不阻塞 调用*/
+		// 开始job的执行，会发送rpc请求让TaskManager执行Task
 		return callAsyncWithoutFencing(() -> startJobExecution(newJobMasterId), RpcUtils.INF_TIMEOUT);
 	}
 
@@ -790,7 +793,6 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 		if (Objects.equals(getFencingToken(), newJobMasterId)) {
 			log.info("Already started the job execution with JobMasterId {}.", newJobMasterId);
-
 			return Acknowledge.get();
 		}
 
@@ -800,30 +802,35 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		startJobMasterServices();
 
 		log.info("Starting execution of job {} ({}) under job master id {}.", jobGraph.getName(), jobGraph.getJobID(), newJobMasterId);
-
-		/*TODO 重置和启动调度器*/
+		/*TODO 重置和启动调度器 让TaskManager执行Task*/
+		// 开始申请slot,并且部署Task
 		resetAndStartScheduler();
-
 		return Acknowledge.get();
 	}
 
+	// 先开始心跳，再向Resourcemanager 注册该JobMaster
 	private void startJobMasterServices() throws Exception {
 		/*TODO 启动心跳服务：taskmanager、resourcemanager*/
+		//JobMaster 需要跟 resourcemanager 维持心跳
+		//JobMaster 需要跟 taskmanager 维持心跳
 		startHeartbeatServices();
 
 		// start the slot pool make sure the slot pool now accepts messages for this leader
 		/*TODO 启动 slotpool*/
+		// SlotPoolImpl#start
 		slotPool.start(getFencingToken(), getAddress(), getMainThreadExecutor());
 
 		//TODO: Remove once the ZooKeeperLeaderRetrieval returns the stored address upon start
 		// try to reconnect to previously known leader
+		//todo 跟ResourceManager重新连接,注册该JobMaster,主要是为了申请slot，申请slot在resetAndStartScheduler
 		reconnectToResourceManager(new FlinkException("Starting JobMaster component."));
 
 		// job is ready to go, try to establish connection with resource manager
 		//   - activate leader retrieval for the resource manager
 		//   - on notification of the leader, the connection will be established and
 		//     the slot pool will start requesting slots
-		/*TODO 与ResourceManager建立连接，slotpool开始请求资源*/
+		// DefaultLeaderRetrievalService#start
+		//监听ResourceManager地址的变更，防止ResourceManager发送故障
 		resourceManagerLeaderRetriever.start(new ResourceManagerLeaderListener());
 	}
 
@@ -938,7 +945,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 				}
 			);
 		}
-
+		//todo 开始调度，最终让TaskManager执行Task
 		FutureUtils.assertNoException(schedulerAssignedFuture.thenRun(this::startScheduling));
 	}
 
@@ -947,7 +954,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		// register self as job status change listener
 		jobStatusListener = new JobManagerJobStatusListener();
 		schedulerNG.registerJobStatusListener(jobStatusListener);
-
+		//todo
 		schedulerNG.startScheduling();
 	}
 
@@ -1017,12 +1024,15 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	private void reconnectToResourceManager(Exception cause) {
+		//先关掉和ResourceManager的连接
 		closeResourceManagerConnection(cause);
+		//todo 尝试重连ResourceManager
 		tryConnectToResourceManager();
 	}
 
 	private void tryConnectToResourceManager() {
 		if (resourceManagerAddress != null) {
+			//todo
 			connectToResourceManager();
 		}
 	}
@@ -1033,7 +1043,6 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		assert(establishedResourceManagerConnection == null);
 
 		log.info("Connecting to ResourceManager {}", resourceManagerAddress);
-
 		resourceManagerConnection = new ResourceManagerConnection(
 			log,
 			jobGraph.getJobID(),
@@ -1043,7 +1052,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 			resourceManagerAddress.getAddress(),
 			resourceManagerAddress.getResourceManagerId(),
 			scheduledExecutorService);
-
+		//todo
 		resourceManagerConnection.start();
 	}
 
@@ -1172,6 +1181,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 		@Override
 		protected RetryingRegistration<ResourceManagerId, ResourceManagerGateway, JobMasterRegistrationSuccess> generateRegistration() {
+			//todo
 			return new RetryingRegistration<ResourceManagerId, ResourceManagerGateway, JobMasterRegistrationSuccess>(
 				log,
 				getRpcService(),
@@ -1185,7 +1195,8 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 				protected CompletableFuture<RegistrationResponse> invokeRegistration(
 						ResourceManagerGateway gateway, ResourceManagerId fencingToken, long timeoutMillis) {
 					Time timeout = Time.milliseconds(timeoutMillis);
-
+					//todo 向ResourceManager注册JobMaster ，gateway ResourceManager的代理对象
+					// ResourceManager#registerJobManager
 					return gateway.registerJobManager(
 						jobMasterId,
 						jobManagerResourceID,

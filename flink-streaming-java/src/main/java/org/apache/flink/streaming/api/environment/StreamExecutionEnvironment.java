@@ -1987,7 +1987,7 @@ public class StreamExecutionEnvironment {
 		Preconditions.checkNotNull(jobName, "Streaming Job name should not be null.");
 		//TODO 创建StreamGraph
 		StreamGraph streamGraph = getStreamGraph(jobName);
-		//yarn-per-job模式下 会执行StreamContextEnvironment#execute
+		//todo yarn-per-job模式下 会执行StreamContextEnvironment#execute
 		return execute(streamGraph);
 	}
 
@@ -2159,7 +2159,9 @@ public class StreamExecutionEnvironment {
 	 */
 	@Internal
 	public StreamGraph getStreamGraph(String jobName, boolean clearTransformations) {
-		StreamGraph streamGraph = getStreamGraphGenerator().setJobName(jobName).generate();
+		StreamGraphGenerator streamGraphGenerator = getStreamGraphGenerator().setJobName(jobName);
+		StreamGraph streamGraph = streamGraphGenerator.generate();
+		//true
 		if (clearTransformations) {
 			this.transformations.clear();
 		}

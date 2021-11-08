@@ -37,9 +37,9 @@ public final class FlinkPipelineTranslationUtil {
 			Pipeline pipeline,
 			Configuration optimizerConfiguration,
 			int defaultParallelism) {
-		//获取pipelineTranslator
+		//获取pipelineTranslator  StreamGraphTranslator
 		FlinkPipelineTranslator pipelineTranslator = getPipelineTranslator(pipeline);
-
+		//todo  StreamGraphTranslator#translateToJobGraph
 		return pipelineTranslator.translateToJobGraph(pipeline,
 				optimizerConfiguration,
 				defaultParallelism);
@@ -71,14 +71,13 @@ public final class FlinkPipelineTranslationUtil {
 	}
 
 	private static FlinkPipelineTranslator getPipelineTranslator(Pipeline pipeline) {
+		//批返回的这个
 		PlanTranslator planTranslator = new PlanTranslator();
-
 		if (planTranslator.canTranslate(pipeline)) {
 			return planTranslator;
 		}
-
+		//流式的返回这个
 		StreamGraphTranslator streamGraphTranslator = new StreamGraphTranslator();
-
 		if (streamGraphTranslator.canTranslate(pipeline)) {
 			return streamGraphTranslator;
 		}

@@ -57,15 +57,22 @@ class DefaultExecutionSlotAllocator extends AbstractExecutionSlotAllocator {
 		this.slotProviderStrategy = checkNotNull(slotProviderStrategy);
 	}
 
+	// 在申请slot过程中的两种关于slot的抽象
+	// 1 LogicalSlot  逻辑slot
+	// 2 PhysicalSlot 物理slot
+	// 共享slot的概念
+	// 可能存在多个Task公用一个slot的情况
+	// 事实上，每个去申请slot的task，都能申请一个logicalSlot
+	// 但是有可能，多个申请slot的task申请到的logicalSlot属于同一个PhysicalSlot
 	@Override
 	public List<SlotExecutionVertexAssignment> allocateSlotsFor(
 			List<ExecutionVertexSchedulingRequirements> executionVertexSchedulingRequirements) {
 
 		validateSchedulingRequirements(executionVertexSchedulingRequirements);
-
+		//todo 计算待申请的slot个数
 		List<SlotExecutionVertexAssignment> slotExecutionVertexAssignments =
 				new ArrayList<>(executionVertexSchedulingRequirements.size());
-
+		//todo 计算这些slot申请过程中 slot 的 allocationID
 		Set<AllocationID> allPreviousAllocationIds = computeAllPriorAllocationIds(executionVertexSchedulingRequirements);
 
 		for (ExecutionVertexSchedulingRequirements schedulingRequirements : executionVertexSchedulingRequirements) {
@@ -73,7 +80,7 @@ class DefaultExecutionSlotAllocator extends AbstractExecutionSlotAllocator {
 			final SlotSharingGroupId slotSharingGroupId = schedulingRequirements.getSlotSharingGroupId();
 
 			final SlotRequestId slotRequestId = new SlotRequestId();
-
+			//todo 异步申请slot
 			final CompletableFuture<LogicalSlot> slotFuture = allocateSlot(
 				schedulingRequirements,
 				slotRequestId,
@@ -84,10 +91,9 @@ class DefaultExecutionSlotAllocator extends AbstractExecutionSlotAllocator {
 					executionVertexId,
 					slotFuture,
 					throwable -> slotProviderStrategy.cancelSlotRequest(slotRequestId, slotSharingGroupId, throwable));
-
+			//todo 加入已申请到的slot抽象的集合
 			slotExecutionVertexAssignments.add(slotExecutionVertexAssignment);
 		}
-
 		return slotExecutionVertexAssignments;
 	}
 
@@ -107,6 +113,7 @@ class DefaultExecutionSlotAllocator extends AbstractExecutionSlotAllocator {
 			allPreviousAllocationIds);
 
 		return slotProfileFuture.thenCompose(
+			//todo 异步申请slot
 			slotProfile -> slotProviderStrategy.allocateSlot(
 				slotRequestId,
 				new ScheduledUnit(

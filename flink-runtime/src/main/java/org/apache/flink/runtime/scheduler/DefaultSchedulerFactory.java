@@ -83,7 +83,7 @@ public class DefaultSchedulerFactory implements SchedulerNGFactory {
 				jobGraph.isCheckpointingEnabled())
 			.create();
 		log.info("Using restart back off time strategy {} for {} ({}).", restartBackoffTimeStrategy, jobGraph.getName(), jobGraph.getJobID());
-
+		//todo 会创建并存储ExecutionGraph
 		return new DefaultScheduler(
 			log,
 			jobGraph,

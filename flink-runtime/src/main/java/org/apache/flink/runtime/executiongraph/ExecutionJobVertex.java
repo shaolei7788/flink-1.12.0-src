@@ -393,7 +393,6 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 	//---------------------------------------------------------------------------------------------
 
 	public void connectToPredecessors(Map<IntermediateDataSetID, IntermediateResult> intermediateDataSets) throws JobException {
-
 		/* TODO 获取输入的JobEdge列表 */
 		List<JobEdge> inputs = jobVertex.getInputs();
 
@@ -404,7 +403,6 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		// 遍历每条JobEdge
 		for (int num = 0; num < inputs.size(); num++) {
 			JobEdge edge = inputs.get(num);
-
 			if (LOG.isDebugEnabled()) {
 				if (edge.getSource() == null) {
 					LOG.debug(String.format("Connecting input %d of vertex %s (%s) to intermediate result referenced via ID %s.",
@@ -431,6 +429,8 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 			int consumerIndex = ires.registerConsumer();
 
 			// 由于每⼀个并行度都对应⼀个节点。所以要把每个节点都和前面中间结果相连。
+			// 根据并行度来设置ExecutionVertex
+			//todo 一个ExecutionVertex 就对应到真正执行的StreamTask,一个StreamTask对应一个Slot
 			for (int i = 0; i < parallelism; i++) {
 				ExecutionVertex ev = taskVertices[i];
 				/*TODO 将 ExecutionVertex与 IntermediateResult关联起来*/

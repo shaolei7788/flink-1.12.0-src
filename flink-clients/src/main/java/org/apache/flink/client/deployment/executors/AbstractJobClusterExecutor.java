@@ -62,7 +62,6 @@ public class AbstractJobClusterExecutor<ClusterID, ClientFactory extends Cluster
 	public CompletableFuture<JobClient> execute(@Nonnull final Pipeline pipeline, @Nonnull final Configuration configuration, @Nonnull final ClassLoader userCodeClassloader) throws Exception {
 		/*TODO 将 流图（StreamGraph） 转换成 作业图（JobGraph）*/
 		final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
-
 		/*TODO 集群描述器：创建、启动了 YarnClient， 包含了一些yarn、flink的配置和环境信息*/
 		// YarnClusterClientFactory#createClusterDescriptor
 		try (final ClusterDescriptor<ClusterID> clusterDescriptor = clusterClientFactory.createClusterDescriptor(configuration)) {

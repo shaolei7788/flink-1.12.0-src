@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * @param <I> Type of the incoming heartbeat payload
  * @param <O> Type of the outgoing heartbeat payload
  */
+// 是一个线程
 public class HeartbeatManagerSenderImpl<I, O> extends HeartbeatManagerImpl<I, O> implements Runnable {
 
 	private final long heartbeatPeriod;
@@ -70,6 +71,7 @@ public class HeartbeatManagerSenderImpl<I, O> extends HeartbeatManagerImpl<I, O>
 			heartbeatMonitorFactory);
 
 		this.heartbeatPeriod = heartbeatPeriod;
+		//todo 执行run方法
 		mainThreadExecutor.schedule(this, 0L, TimeUnit.MILLISECONDS);
 	}
 

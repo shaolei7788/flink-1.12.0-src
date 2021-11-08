@@ -169,6 +169,7 @@ public class ExecutionGraphBuilder {
 		// create a new execution graph, if none exists so far
 		final ExecutionGraph executionGraph;
 		try {
+			//todo 创建ExecutionGraph对象
 			// 如果不存在执⾏图，就创建⼀个新的执⾏图
 			executionGraph = (prior != null) ? prior :
 				new ExecutionGraph(
@@ -197,6 +198,7 @@ public class ExecutionGraphBuilder {
 		// set the basic properties
 
 		try {
+			// 生成JobGraph的JSON表达式
 			executionGraph.setJsonPlan(JsonPlanGenerator.generatePlan(jobGraph));
 		}
 		catch (Throwable t) {
@@ -237,6 +239,7 @@ public class ExecutionGraphBuilder {
 			log.debug("Adding {} vertices from job graph {} ({}).", sortedTopology.size(), jobName, jobId);
 		}
 		/*TODO 核心逻辑：将拓扑排序过的JobGraph添加到 executionGraph数据结构中。*/
+		// executionGraph 事实上只是改动了JobGraph的每个节点，没有对整体拓扑结构进行变动
 		executionGraph.attachJobGraph(sortedTopology);
 
 		if (log.isDebugEnabled()) {

@@ -150,6 +150,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 
 	@Override
 	protected void initializeInternal() throws Exception {
+		//todo
 		final YarnContainerEventHandler yarnContainerEventHandler = new YarnContainerEventHandler();
 		try {
 			/*TODO 创建Yarn的ResourceManager的客户端，并且初始化和启动*/
@@ -158,7 +159,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 				yarnContainerEventHandler);
 			resourceManagerClient.init(yarnConfig);
 			resourceManagerClient.start();
-
+			//注册AppMaster
 			final RegisterApplicationMasterResponse registerApplicationMasterResponse = registerApplicationMaster();
 			getContainersFromPreviousAttempts(registerApplicationMasterResponse);
 			taskExecutorProcessSpecContainerResourcePriorityAdapter =
@@ -220,6 +221,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 		Utils.deleteApplicationFiles(configuration.getYarnFiles());
 	}
 
+
 	@Override
 	public CompletableFuture<YarnWorkerNode> requestResource(TaskExecutorProcessSpec taskExecutorProcessSpec) {
 		checkInitialized();
@@ -238,6 +240,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 		} else {
 			final Priority priority = priorityAndResourceOpt.get().getPriority();
 			final Resource resource = priorityAndResourceOpt.get().getResource();
+			//todo
 			resourceManagerClient.addContainerRequest(getContainerRequest(resource, priority));
 
 			// make sure we transmit the request fast and receive fast news of granted allocations
@@ -298,7 +301,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 			if (pendingRequestResourceFutures.isEmpty()) {
 				requestResourceFutures.remove(taskExecutorProcessSpec);
 			}
-
+			//todo
 			startTaskExecutorInContainerAsync(container, taskExecutorProcessSpec, resourceId, requestResourceFuture);
 			removeContainerRequest(pendingRequest);
 
@@ -335,6 +338,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 			ResourceID resourceId,
 			CompletableFuture<YarnWorkerNode> requestResourceFuture) {
 		final CompletableFuture<ContainerLaunchContext> containerLaunchContextFuture =
+			//todo 启动TaskExecutor
 			FutureUtils.supplyAsync(() -> createTaskExecutorLaunchContext(
 				resourceId, container.getNodeId().getHost(), taskExecutorProcessSpec), getIoExecutor());
 
@@ -391,7 +395,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 			BootstrapTools.getDynamicPropertiesAsString(flinkClientConfig, taskManagerConfig);
 
 		log.debug("TaskManager configuration: {}", taskManagerConfig);
-
+		//todo
 		final ContainerLaunchContext taskExecutorLaunchContext = Utils.createTaskExecutorContext(
 			flinkConfig,
 			yarnConfig,
@@ -399,6 +403,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 			taskManagerParameters,
 			taskManagerDynamicProperties,
 			currDir,
+			//todo  TaskManager启动类
 			YarnTaskExecutorRunner.class,
 			log);
 
@@ -527,6 +532,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 			);
 		}
 
+		//容器分配后调用
 		@Override
 		public void onContainersAllocated(List<Container> containers) {
 			runAsyncWithFatalHandler(() -> {
@@ -534,6 +540,7 @@ public class YarnResourceManagerDriver extends AbstractResourceManagerDriver<Yar
 				log.info("Received {} containers.", containers.size());
 
 				for (Map.Entry<Priority, List<Container>> entry : groupContainerByPriority(containers).entrySet()) {
+					//todo
 					onContainersOfPriorityAllocated(entry.getKey(), entry.getValue());
 				}
 

@@ -234,7 +234,7 @@ public abstract class SchedulerBase implements SchedulerNG {
 		this.slotRequestTimeout = checkNotNull(slotRequestTimeout);
 		this.executionVertexVersioner = checkNotNull(executionVertexVersioner);
 		this.legacyScheduling = legacyScheduling;
-
+		//todo 创建并存储ExecutionGraph
 		this.executionGraph = createAndRestoreExecutionGraph(jobManagerJobMetricGroup, checkNotNull(shuffleMaster), checkNotNull(partitionTracker), checkNotNull(executionDeploymentTracker), initializationTimestamp);
 
 		this.schedulingTopology = executionGraph.getSchedulingTopology();
@@ -246,23 +246,26 @@ public abstract class SchedulerBase implements SchedulerNG {
 		this.coordinatorMap = createCoordinatorMap();
 	}
 
+	// 将JobGraph转为ExecutionGraph, ExecutionGraph 是JobGraph 并行化版本
 	private ExecutionGraph createAndRestoreExecutionGraph(
 		JobManagerJobMetricGroup currentJobManagerJobMetricGroup,
 		ShuffleMaster<?> shuffleMaster,
 		JobMasterPartitionTracker partitionTracker,
 		ExecutionDeploymentTracker executionDeploymentTracker,
 		long initializationTimestamp) throws Exception {
-
+		//todo 将JobGraph转为ExecutionGraph
 		ExecutionGraph newExecutionGraph = createExecutionGraph(currentJobManagerJobMetricGroup, shuffleMaster, partitionTracker, executionDeploymentTracker, initializationTimestamp);
 
 		final CheckpointCoordinator checkpointCoordinator = newExecutionGraph.getCheckpointCoordinator();
 
 		if (checkpointCoordinator != null) {
 			// check whether we find a valid checkpoint
+			// 检查是否能找到有效的checkpoint
 			if (!checkpointCoordinator.restoreInitialCheckpointIfPresent(
 					new HashSet<>(newExecutionGraph.getAllVertices().values()))) {
 
 				// check whether we can restore from a savepoint
+				// 故障恢复检查是否能从savepoint进行恢复
 				tryRestoreExecutionGraphFromSavepoint(newExecutionGraph, jobGraph.getSavepointRestoreSettings());
 			}
 		}
@@ -287,7 +290,7 @@ public abstract class SchedulerBase implements SchedulerNG {
 		final FailoverStrategy.Factory failoverStrategy = legacyScheduling ?
 			FailoverStrategyLoader.loadFailoverStrategy(jobMasterConfiguration, log) :
 			new NoOpFailoverStrategy.Factory();
-
+		//todo 将JobGraph转为ExecutionGraph
 		return ExecutionGraphBuilder.buildGraph(
 			null,
 			jobGraph,
@@ -564,7 +567,9 @@ public abstract class SchedulerBase implements SchedulerNG {
 	public final void startScheduling() {
 		mainThreadExecutor.assertRunningInMainThread();
 		registerJobMetrics();
+		//启动所有的服务协调组
 		startAllOperatorCoordinators();
+		//todo 开始调度
 		startSchedulingInternal();
 	}
 
