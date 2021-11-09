@@ -113,7 +113,7 @@ abstract class AbstractRecordReader<T extends IOReadableWritable> extends Abstra
 					return true;
 				}
 			}
-
+			//todo
 			final BufferOrEvent bufferOrEvent = inputGate.getNext().orElseThrow(IllegalStateException::new);
 
 			if (bufferOrEvent.isBuffer()) {

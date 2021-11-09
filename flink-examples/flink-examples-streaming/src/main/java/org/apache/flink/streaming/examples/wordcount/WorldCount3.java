@@ -18,20 +18,21 @@ public class WorldCount3 {
     public static void main(String[] args) throws Exception {
         // 1. 创建流式执行环境 flink run -d -t yarn-per-job     env =  StreamContextEnvironment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // 2. 读取文件
         DataStreamSource<String> lineDSS = env.socketTextStream("localhost", 9999);
 
 		FlatMapFunction flatMapFunction = new FlatMapFunction<String,String>() {
 			@Override
 			public void flatMap(String value, Collector<String> words) throws Exception {
-				Arrays.stream(value.split(" ")).forEach(words::collect);
+				for (String word : value.split(" ")) {
+					words.collect(word);
+				}
 			}
 		};
 
 		// 将Function 转换为 Operator 再转为 Transformation 添加到 List<Transformation<?>> transformations
 		SingleOutputStreamOperator wordAndOne = lineDSS.flatMap(flatMapFunction);
 
-		MapFunction mapFunction = new MapFunction<String,Tuple2>() {
+		MapFunction mapFunction = new MapFunction<String,Tuple2<String,Long>>() {
 			@Override
 			public Tuple2<String,Long> map(String value) throws Exception {
 				return Tuple2.of(value, 1L);

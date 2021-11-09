@@ -93,6 +93,7 @@ public abstract class InputGate implements PullingAsyncDataInput<BufferOrEvent>,
 
 	public abstract int getNumberOfInputChannels();
 
+	//是否完成
 	public abstract boolean isFinished();
 
 	/**
@@ -102,6 +103,7 @@ public abstract class InputGate implements PullingAsyncDataInput<BufferOrEvent>,
 	 *
 	 * @return {@code Optional.empty()} if {@link #isFinished()} returns true.
 	 */
+	//正在阻塞等待下一个{@link BufferOrEvent}的调用。( 在得到下一个缓冲区之前，应该保证上一个返回的缓冲区已经被回收。)
 	public abstract Optional<BufferOrEvent> getNext() throws IOException, InterruptedException;
 
 	/**
@@ -111,8 +113,10 @@ public abstract class InputGate implements PullingAsyncDataInput<BufferOrEvent>,
 	 *
 	 * @return {@code Optional.empty()} if there is no data to return or if {@link #isFinished()} returns true.
 	 */
+	//获取下一个 元素, 该方法应该是非阻塞的
 	public abstract Optional<BufferOrEvent> pollNext() throws IOException, InterruptedException;
 
+	//发送 任务事件
 	public abstract void sendTaskEvent(TaskEvent event) throws IOException;
 
 	/**
@@ -125,16 +129,19 @@ public abstract class InputGate implements PullingAsyncDataInput<BufferOrEvent>,
 		return availabilityHelper.getAvailableFuture();
 	}
 
+	//请求消费 ResultPartition
 	public abstract void resumeConsumption(InputChannelInfo channelInfo) throws IOException;
 
 	/**
 	 * Returns the channel of this gate.
 	 */
+	//返回gate的channel
 	public abstract InputChannel getChannel(int channelIndex);
 
 	/**
 	 * Returns the channel infos of this gate.
 	 */
+	//返回这个gate 的 channel 信息
 	public List<InputChannelInfo> getChannelInfos() {
 		return IntStream.range(0, getNumberOfInputChannels())
 			.mapToObj(index -> getChannel(index).getChannelInfo())
@@ -179,8 +186,10 @@ public abstract class InputGate implements PullingAsyncDataInput<BufferOrEvent>,
 	/**
 	 * Setup gate, potentially heavy-weight, blocking operation comparing to just creation.
 	 */
+	//设置gate，可能很重的重量，阻塞操作相比，只是创建
 	public abstract void setup() throws IOException;
 
+	//请求消费 ResultPartition
 	public abstract void requestPartitions() throws IOException;
 
 	public abstract CompletableFuture<Void> getStateConsumedFuture();

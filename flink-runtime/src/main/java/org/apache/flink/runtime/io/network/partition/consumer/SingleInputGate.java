@@ -111,9 +111,11 @@ public class SingleInputGate extends IndexedInputGate {
 	private static final Logger LOG = LoggerFactory.getLogger(SingleInputGate.class);
 
 	/** Lock object to guard partition requests and runtime channel updates. */
+	//锁定对象以保护分区请求和运行时通道更新
 	private final Object requestLock = new Object();
 
 	/** The name of the owning task, for logging purposes. */
+	//所属任务的名称，用于日志记录
 	private final String owningTaskName;
 
 	private final int gateIndex;
@@ -123,30 +125,45 @@ public class SingleInputGate extends IndexedInputGate {
 	 * intermediate result specified by this ID. This ID also identifies the input gate at the
 	 * consuming task.
 	 */
+	//消费上一算子输出结果子分区的 ID
 	private final IntermediateDataSetID consumedResultId;
 
 	/** The type of the partition the input gate is consuming. */
+	//结果分区的类型 : {ResultPartitionType@7380} "PIPELINED_BOUNDED"
 	private final ResultPartitionType consumedPartitionType;
 
 	/**
 	 * The index of the consumed subpartition of each consumed partition. This index depends on the
 	 * {@link DistributionPattern} and the subtask indices of the producing and consuming task.
 	 */
+	//消费子分区的 index
 	private final int consumedSubpartitionIndex;
 
 	/** The number of input channels (equivalent to the number of consumed partitions). */
+	//inputchannel的数量
 	private final int numberOfInputChannels;
 
+
 	/**
-	 * Input channels. There is a one input channel for each consumed intermediate result partition.
-	 * We store this in a map for runtime updates of single channels.
+	 * InputGate中所有的 Input channels.
+	 *      * 结果分区 --> input channels
+	 *      * 每个消耗的中间结果分区都有一个输入通道。
+	 *      * 我们将其存储在一个映射中，用于单个通道的运行时更新
+	 *      * inputChannels = {HashMap@8215}  size = 1
+	 *      *         {IntermediateResultPartitionID@8237} "5eba1007ad48ad2243891e1eff29c32b#0" -> {LocalRecoveredInputChannel@8238}
 	 */
 	private final Map<IntermediateResultPartitionID, InputChannel> inputChannels;
 
+	/**
+	 * InputGate中所有的 Input channels.
+	 *      channels = {InputChannel[1]@8216}
+	 *          0 = {LocalRecoveredInputChannel@8238}
+	 */
 	@GuardedBy("requestLock")
 	private final InputChannel[] channels;
 
 	/** Channels, which notified this input gate about available data. */
+	//InputChannel 构成的队列
 	private final PrioritizedDeque<InputChannel> inputChannelsWithData = new PrioritizedDeque<>();
 
 	/**
@@ -156,6 +173,7 @@ public class SingleInputGate extends IndexedInputGate {
 	@GuardedBy("inputChannelsWithData")
 	private final BitSet enqueuedInputChannelsWithData;
 
+	// 无分区事件的通道
 	private final BitSet channelsWithEndOfPartitionEvents;
 
 	@GuardedBy("inputChannelsWithData")
@@ -173,13 +191,17 @@ public class SingleInputGate extends IndexedInputGate {
 	private boolean hasReceivedAllEndOfPartitionEvents;
 
 	/** Flag indicating whether partitions have been requested. */
+	//指示是否已请求分区的标志
 	private boolean requestedPartitionsFlag;
 
+	//阻塞的Evnet
 	private final List<TaskEvent> pendingEvents = new ArrayList<>();
 
+	//未初始化通道数
 	private int numberOfUninitializedChannels;
 
 	/** A timer to retrigger local partition requests. Only initialized if actually needed. */
+	//重新触发本地分区请求的计时器。仅在实际需要时初始化。
 	private Timer retriggerLocalRequestTimer;
 
 	private final SupplierWithException<BufferPool, IOException> bufferPoolFactory;
@@ -242,12 +264,15 @@ public class SingleInputGate extends IndexedInputGate {
 		return inputChannelsWithData;
 	}
 
+	//为所有的input channel分配专属内存
 	@Override
 	public void setup() throws IOException {
 		checkState(this.bufferPool == null, "Bug in input gate setup logic: Already registered buffer pool.");
+		//为所有的InputChannel分配专用buffer，剩下的作为浮动buffer
 		setupChannels();
-
+		//设置bufferPool，用于分配浮动buffer
 		BufferPool bufferPool = bufferPoolFactory.get();
+		//请求各个input channel需要读取的subpartition
 		setBufferPool(bufferPool);
 	}
 
@@ -267,6 +292,7 @@ public class SingleInputGate extends IndexedInputGate {
 	@Override
 	public void requestPartitions() {
 		synchronized (requestLock) {
+			// 只能请求一次partition，第一次调用该方法后此flag会被设置为true
 			if (!requestedPartitionsFlag) {
 				if (closeFuture.isDone()) {
 					throw new IllegalStateException("Already released.");
@@ -281,11 +307,11 @@ public class SingleInputGate extends IndexedInputGate {
 						inputChannels.size(),
 						numberOfInputChannels));
 				}
-
 				convertRecoveredInputChannels();
+				// 请求分区数据
 				internalRequestPartitions();
 			}
-
+			// 方法调用完毕设置flag为true，防止重复调用
 			requestedPartitionsFlag = true;
 		}
 	}
@@ -311,6 +337,7 @@ public class SingleInputGate extends IndexedInputGate {
 	private void internalRequestPartitions() {
 		for (InputChannel inputChannel : inputChannels.values()) {
 			try {
+				//每一个channel都请求对应的子分区
 				inputChannel.requestSubpartition(consumedSubpartitionIndex);
 			} catch (Throwable t) {
 				inputChannel.setError(t);
@@ -337,6 +364,7 @@ public class SingleInputGate extends IndexedInputGate {
 		return numberOfInputChannels;
 	}
 
+	//获取该inputgate的编号
 	@Override
 	public int getGateIndex() {
 		return gateIndex;
@@ -447,7 +475,7 @@ public class SingleInputGate extends IndexedInputGate {
 			IntermediateResultPartitionID partitionId = shuffleDescriptor.getResultPartitionID().getPartitionId();
 
 			InputChannel current = inputChannels.get(partitionId);
-
+			// 该InputChannel尚未明确
 			if (current instanceof UnknownInputChannel) {
 				UnknownInputChannel unknownChannel = (UnknownInputChannel) current;
 				boolean isLocal = shuffleDescriptor.isLocalTo(localLocation);
@@ -536,6 +564,7 @@ public class SingleInputGate extends IndexedInputGate {
 
 					for (InputChannel inputChannel : inputChannels.values()) {
 						try {
+							// 释放资源
 							inputChannel.releaseAllResources();
 						}
 						catch (IOException e) {
@@ -591,21 +620,32 @@ public class SingleInputGate extends IndexedInputGate {
 		return getNextBufferOrEvent(false);
 	}
 
+	/**
+	 * Task 通过循环调用 InputGate.getNextBufferOrEvent 方法获取输入数据，
+	 *     并将获取的数据交给它所封装的算子进行处理，
+	 *      这构成了一个 Task 的基本运行逻辑
+	 * @param blocking
+	 * @return
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
 	private Optional<BufferOrEvent> getNextBufferOrEvent(boolean blocking) throws IOException, InterruptedException {
+		// 如果接收到所有分区终止的事件，则返回空
 		if (hasReceivedAllEndOfPartitionEvents) {
 			return Optional.empty();
 		}
-
+		// 如果input gate被关闭
 		if (closeFuture.isDone()) {
 			throw new CancelTaskException("Input gate is already closed.");
 		}
-
+		// 以{ blocking : 阻塞/非阻塞 }方式读取数据
 		Optional<InputWithData<InputChannel, BufferAndAvailability>> next = waitAndGetNextData(blocking);
 		if (!next.isPresent()) {
 			return Optional.empty();
 		}
-
+		// 获取到数据
 		InputWithData<InputChannel, BufferAndAvailability> inputWithData = next.get();
+		// 根据Buffer 判断数据是事件还是数据
 		return Optional.of(transformToBufferOrEvent(
 			inputWithData.data.buffer(),
 			inputWithData.moreAvailable,
@@ -621,7 +661,7 @@ public class SingleInputGate extends IndexedInputGate {
 				if (!inputChannelOpt.isPresent()) {
 					return Optional.empty();
 				}
-
+				// 获取channel，根据blocking参数决定是否是阻塞方式
 				final InputChannel inputChannel = inputChannelOpt.get();
 				Optional<BufferAndAvailability> bufferAndAvailabilityOpt = inputChannel.getNextBuffer();
 
@@ -632,6 +672,7 @@ public class SingleInputGate extends IndexedInputGate {
 
 				final BufferAndAvailability bufferAndAvailability = bufferAndAvailabilityOpt.get();
 				if (bufferAndAvailability.moreAvailable()) {
+					// 将输入通道排在末尾以避免饥饿
 					// enqueue the inputChannel at the end to avoid starvation
 					queueChannelUnsafe(inputChannel, bufferAndAvailability.morePriorityEvents());
 				}
@@ -643,9 +684,9 @@ public class SingleInputGate extends IndexedInputGate {
 						priorityAvailabilityHelper.resetUnavailable();
 					}
 				}
-
+				// 如果inputChannelsWithData为空，设置为不可用状态
 				checkUnavailability();
-
+				// 返回包装后的结果
 				return Optional.of(new InputWithData<>(
 					inputChannel,
 					bufferAndAvailability,
@@ -668,6 +709,7 @@ public class SingleInputGate extends IndexedInputGate {
 			boolean moreAvailable,
 			InputChannel currentChannel,
 			boolean morePriorityEvents) throws IOException, InterruptedException {
+		// 根据Buffer 判断数据是事件还是数据
 		if (buffer.isBuffer()) {
 			return transformBuffer(buffer, moreAvailable, currentChannel, morePriorityEvents);
 		} else {
@@ -698,11 +740,15 @@ public class SingleInputGate extends IndexedInputGate {
 		} finally {
 			buffer.recycleBuffer();
 		}
-
+		//如果是 EndOfPartitionEvent 事件，那么如果所有的 InputChannel 都接收到这个事件了
+		//将 hasReceivedAllEndOfPartitionEvents 标记为 true，此后不再能获取到数据
 		if (event.getClass() == EndOfPartitionEvent.class) {
 			channelsWithEndOfPartitionEvents.set(currentChannel.getChannelIndex());
 
 			if (channelsWithEndOfPartitionEvents.cardinality() == numberOfInputChannels) {
+				//由于以下双方的竞争条件：
+				//      1.在此方法中释放inputChannelsWithData锁并到达此位置
+				//      2.空数据通知，对通道重新排队，我们可以将moreAvailable标志设置为true，而不需要更多数据
 				// Because of race condition between:
 				// 1. releasing inputChannelsWithData lock in this method and reaching this place
 				// 2. empty data notification that re-enqueues a channel
@@ -748,10 +794,11 @@ public class SingleInputGate extends IndexedInputGate {
 	@Override
 	public void sendTaskEvent(TaskEvent event) throws IOException {
 		synchronized (requestLock) {
+			// 循环所有的InputChannel 调用其sendTaskEvent
 			for (InputChannel inputChannel : inputChannels.values()) {
 				inputChannel.sendTaskEvent(event);
 			}
-
+			// 如果有尚未初始化完成的队列, 将Event加入队列
 			if (numberOfUninitializedChannels > 0) {
 				pendingEvents.add(event);
 			}

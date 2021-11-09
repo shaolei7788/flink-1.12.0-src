@@ -137,10 +137,11 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 
 	/** The class logger. */
 	private static final Logger LOG = LoggerFactory.getLogger(Task.class);
-
+	//线程组 包含所有 task thread
 	/** The thread group that contains all task threads. */
 	private static final ThreadGroup TASK_THREADS_GROUP = new ThreadGroup("Flink Task Threads");
 
+	//任务状态标识
 	/** For atomic state updates. */
 	private static final AtomicReferenceFieldUpdater<Task, ExecutionState> STATE_UPDATER =
 			AtomicReferenceFieldUpdater.newUpdater(Task.class, ExecutionState.class, "executionState");
@@ -151,98 +152,126 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 
 	/** The job that the task belongs to. */
 	private final JobID jobId;
-
+	//当前任务在JobGraph所属的  job vertex id
 	/** The vertex in the JobGraph whose code the task executes. */
 	private final JobVertexID vertexId;
 
+	//在ExecutionGraph中 子任务所属的 ExecutionAttemptID
 	/** The execution attempt of the parallel subtask. */
 	private final ExecutionAttemptID executionId;
 
+	//在同一个slot中运行锁分配的AllocationID
 	/** ID which identifies the slot in which the task is supposed to run. */
 	private final AllocationID allocationId;
 
 	/** TaskInfo object for this task. */
+	//任务的相关信息
 	private final TaskInfo taskInfo;
 
 	/** The name of the task, including subtask indexes. */
+	//任务名称,包含子任务的索引.
 	private final String taskNameWithSubtask;
 
 	/** The job-wide configuration object. */
+	//job的配置相关信息
 	private final Configuration jobConfiguration;
 
 	/** The task-specific configuration. */
 	private final Configuration taskConfiguration;
 
 	/** The jar files used by this task. */
+	//task任务需所需要的jar文件
 	private final Collection<PermanentBlobKey> requiredJarFiles;
 
 	/** The classpaths used by this task. */
+	//classpaths相关
 	private final Collection<URL> requiredClasspaths;
 
 	/** The name of the class that holds the invokable code. */
+	//该任务的实例化类型
+	//SourceStreamTask
+	//OneInputStreamTask
 	private final String nameOfInvokableClass;
 
 	/** Access to task manager configuration and host names. */
+	//访问 task manager 配置/host name 相关信息
 	private final TaskManagerRuntimeInfo taskManagerConfig;
 
 	/** The memory manager to be used by this task. */
+	//内存管理相关
 	private final MemoryManager memoryManager;
 
 	/** The I/O manager to be used by this task. */
 	private final IOManager ioManager;
 
 	/** The BroadcastVariableManager to be used by this task. */
+	//广播变量 BroadcastVariableManager
 	private final BroadcastVariableManager broadcastVariableManager;
-
+	//任务事件的Dispatcher
 	private final TaskEventDispatcher taskEventDispatcher;
 
 	/** Information provider for external resources. */
+	//外部resources 信息
 	private final ExternalResourceInfoProvider externalResourceInfoProvider;
 
 	/** The manager for state of operators running in this task/slot. */
+	//task/slot 的状态信息
 	private final TaskStateManager taskStateManager;
 
 	/** Serialized version of the job specific execution configuration (see {@link ExecutionConfig}). */
+	//job指定execution配置的序列化相关
 	private final SerializedValue<ExecutionConfig> serializedExecutionConfig;
 
+	//ResultPartitionWriter
 	private final ResultPartitionWriter[] consumableNotifyingPartitionWriters;
 
 	private final IndexedInputGate[] inputGates;
 
 	/** Connection to the task manager. */
+	//task manager的 Connection
 	private final TaskManagerActions taskManagerActions;
 
 	/** Input split provider for the task. */
 	private final InputSplitProvider inputSplitProvider;
 
 	/** Checkpoint notifier used to communicate with the CheckpointCoordinator. */
+	// Checkpoint 相关
 	private final CheckpointResponder checkpointResponder;
 
 	/** The gateway for operators to send messages to the operator coordinators on the Job Manager. */
+	//发送信息给 Job Manager 的Gateway
 	private final TaskOperatorEventGateway operatorCoordinatorEventGateway;
 
 	/** GlobalAggregateManager used to update aggregates on the JobMaster. */
+	//GlobalAggregateManager用于JobMaster的更新和聚合
 	private final GlobalAggregateManager aggregateManager;
 
 	/** The library cache, from which the task can request its class loader. */
+	//task请求class loader的时候,加载的library 缓存
 	private final LibraryCacheManager.ClassLoaderHandle classLoaderHandle;
 
 	/** The cache for user-defined files that the invokable requires. */
+	//用户定义的文件的缓存
 	private final FileCache fileCache;
 
 	/** The service for kvState registration of this task. */
+	//task的 kv 状态服务相关
 	private final KvStateService kvStateService;
 
 	/** The registry of this task which enables live reporting of accumulators. */
+	//task启用live reporting of accumulators的注册相关
 	private final AccumulatorRegistry accumulatorRegistry;
 
 	/** The thread that executes the task. */
+	//当前执行task的Thread 线程.
 	private final Thread executingThread;
 
 	/** Parent group for all metrics of this task. */
+	//task metrics相关
 	private final TaskMetricGroup metrics;
 
 	/** Partition producer state checker to request partition states from. */
+	//分区相关
 	private final PartitionProducerStateChecker partitionProducerStateChecker;
 
 	/** Executor to run future callbacks. */
@@ -258,14 +287,18 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 	// ------------------------------------------------------------------------
 
 	/** atomic flag that makes sure the invokable is canceled exactly once upon error. */
+	//是否取消 : 默认false
 	private final AtomicBoolean invokableHasBeenCanceled;
 
 	/** The invokable of this task, if initialized. All accesses must copy the reference and
 	 * check for null, as this field is cleared as part of the disposal logic. */
+	//task 的 invokable,所有的请求必须复制其引用,并检查是否为null
+	// 作为逻辑处理中的一部分,该字段将会被清理
 	@Nullable
 	private volatile AbstractInvokable invokable;
 
 	/** The current execution state of the task. */
+	//任务的状态
 	private volatile ExecutionState executionState = ExecutionState.CREATED;
 
 	/** The observed exception, in case the task execution failed. */
@@ -275,6 +308,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 	private long taskCancellationInterval;
 
 	/** Initialized from the Flink configuration. May also be set at the ExecutionConfig */
+	//根据Flink 配置进行初始化, 也可在ExecutionConfig中设置
 	private long taskCancellationTimeout;
 
 	/** This class loader should be set as the context class loader for threads that may dynamically load user code. */
@@ -591,6 +625,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 
 		// all resource acquisitions and registrations from here on
 		// need to be undone in the end
+		// 所有从这里获取和注册的资源最终都需要撤消
 		Map<String, Future<Path>> distributedCacheEntries = new HashMap<>();
 		AbstractInvokable invokable = null;
 
@@ -602,12 +637,14 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 
 			// activate safety net for task thread
 			LOG.debug("Creating FileSystem stream leak safety net for task {}", this);
+			//任务引导-我们定期检查是否作为快捷方式取消
 			FileSystemSafetyNet.initializeSafetyNetForThread();
 
 			// first of all, get a user-code classloader
 			// this may involve downloading the job's JAR files and/or classes
+			// 首先，获取一个用户代码类加载器这可能涉及下载作业的JAR文件和/或类
 			LOG.info("Loading JAR files for task {}.", this);
-
+			// 获取用户类加载器 : UserCodeClassLoader
 			userCodeClassLoader = createUserCodeClassloader();
 			final ExecutionConfig executionConfig = serializedExecutionConfig.deserializeValue(userCodeClassLoader.asClassLoader());
 
@@ -633,7 +670,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 			// ----------------------------------------------------------------
 
 			LOG.info("Registering task at network: {}.", this);
-
+			// 接收任务
 			setupPartitionsAndGates(consumableNotifyingPartitionWriters, inputGates);
 
 			for (ResultPartitionWriter partitionWriter : consumableNotifyingPartitionWriters) {
@@ -1167,9 +1204,10 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 
 		final AbstractInvokable invokable = this.invokable;
 		final CheckpointMetaData checkpointMetaData = new CheckpointMetaData(checkpointID, checkpointTimestamp);
-
+		// 只有状态为RUNNING才可以触发Checkpoint操作
 		if (executionState == ExecutionState.RUNNING && invokable != null) {
 			try {
+				// [核心] 触发Checkpoint操作
 				invokable.triggerCheckpointAsync(checkpointMetaData, checkpointOptions, advanceToEndOfEventTime);
 			}
 			catch (RejectedExecutionException ex) {
@@ -1192,7 +1230,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 		}
 		else {
 			LOG.debug("Declining checkpoint request for non-running task {} ({}).", taskNameWithSubtask, executionId);
-
+			// 发回消息说我们没有做检查点
 			// send back a message that we did not do the checkpoint
 			checkpointResponder.declineCheckpoint(jobId, executionId, checkpointID,
 					new CheckpointException("Task name with subtask : " + taskNameWithSubtask, CheckpointFailureReason.CHECKPOINT_DECLINED_TASK_NOT_READY));
@@ -1272,6 +1310,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 		}
 
 		try {
+			// 调用算子实例invokable的dispatchOperatorEvent方法实现 事件分发操作..
 			invokable.dispatchOperatorEvent(operator, evt);
 		}
 		catch (Throwable t) {
