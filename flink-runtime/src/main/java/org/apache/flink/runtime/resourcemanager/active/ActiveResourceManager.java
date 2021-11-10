@@ -90,6 +90,7 @@ public class ActiveResourceManager<WorkerType extends ResourceIDRetrievable>
 			FatalErrorHandler fatalErrorHandler,
 			ResourceManagerMetricGroup resourceManagerMetricGroup,
 			Executor ioExecutor) {
+		//todo 创建
 		super(
 				rpcService,
 				resourceId,

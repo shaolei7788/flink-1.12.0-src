@@ -101,6 +101,7 @@ public abstract class ActiveResourceManagerFactory<WorkerType extends ResourceID
 				resourceId,
 				highAvailabilityServices,
 				heartbeatServices,
+				//获取slotManager
 				resourceManagerRuntimeServices.getSlotManager(),
 				ResourceManagerPartitionTrackerImpl::new,
 				resourceManagerRuntimeServices.getJobLeaderIdService(),

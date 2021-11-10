@@ -127,7 +127,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			dispatcherLeaderRetrievalService = highAvailabilityServices.getDispatcherLeaderRetriever();
 			// ResourceManager 高可用相关
 			resourceManagerRetrievalService = highAvailabilityServices.getResourceManagerLeaderRetriever();
-			// Dispatcher 网关相关
+			// Dispatcher 网关相关  GatewayRetriever组件用于获取指定集群组件Gateway当前活跃的Leader地址，避免因为集群RPC组件服务宕机
 			final LeaderGatewayRetriever<DispatcherGateway> dispatcherGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				DispatcherGateway.class,
@@ -157,6 +157,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 			// 里面维护了很多很多的Handler，如果客户端通过 flink run 的方式来提交一个 job 到 flink
 			// 集群，最终，是由 WebMonitorEndpoint 来接收，并且决定使用哪一个 Handler 来执行处理
 			// webMonitorEndpoint = MiniDispatcherRestEndpoint
+			// JobRestEndpointFactory#createRestEndpoint
 			webMonitorEndpoint = restEndpointFactory.createRestEndpoint(
 				configuration,
 				dispatcherGatewayRetriever,
@@ -189,7 +190,7 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 				ioExecutor);
 			// 获取 history server 相关
 			final HistoryServerArchivist historyServerArchivist = HistoryServerArchivist.createHistoryServerArchivist(configuration, webMonitorEndpoint, ioExecutor);
-
+			//部分dispatcher服务
 			final PartialDispatcherServices partialDispatcherServices = new PartialDispatcherServices(
 				configuration,
 				highAvailabilityServices,
@@ -204,7 +205,9 @@ public class DefaultDispatcherResourceManagerComponentFactory implements Dispatc
 				ioExecutor);
 
 			log.debug("Starting Dispatcher.");
-			/*TODO 创建和启动 Dispatcher => dispatcher会创建和启动JobMaster*/
+			//TODO dispatcherRunner负责启动和管理Dispatcher，并支持对Dispatcher组件的Leader选举,
+			// 当Dispatcher出现异常时，会通过dispatcherRunner重新选举和启动新的Dispatcher服务，从而保证Dispatcher的高可用
+			// => dispatcher会创建和启动JobMaster*/
 			// 通过选举 调用 onStart
 			dispatcherRunner = dispatcherRunnerFactory.createDispatcherRunner(
 				// DefaultLeaderElectionService LeaderElectionService

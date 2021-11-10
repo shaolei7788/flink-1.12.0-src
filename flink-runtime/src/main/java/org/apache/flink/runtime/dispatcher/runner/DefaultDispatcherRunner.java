@@ -109,13 +109,14 @@ public final class DefaultDispatcherRunner implements DispatcherRunner, LeaderCo
 	private void startNewDispatcherLeaderProcess(UUID leaderSessionID) {
 		// 停止之前的DispatcherLeader 进程
 		stopDispatcherLeaderProcess();
-        // 构建新的 DispatcherLeader 进程
+        //todo 构建新的 dispatcherLeaderProcess 用于单个JobGraph的恢复和提交
+		// dispatcherLeaderProcess = JobDispatcherLeaderProcess
 		dispatcherLeaderProcess = createNewDispatcherLeaderProcess(leaderSessionID);
 
 		final DispatcherLeaderProcess newDispatcherLeaderProcess = dispatcherLeaderProcess;
 		// 启动
 		FutureUtils.assertNoException(
-			//todo start
+			//todo DispatcherLeaderProcessstart 用于启动dispatcherLeaderProcess
 			previousDispatcherLeaderProcessTerminationFuture.thenRun(newDispatcherLeaderProcess::start));
 	}
 
@@ -129,7 +130,9 @@ public final class DefaultDispatcherRunner implements DispatcherRunner, LeaderCo
 
 	private DispatcherLeaderProcess createNewDispatcherLeaderProcess(UUID leaderSessionID) {
 		LOG.debug("Create new {} with leader session id {}.", DispatcherLeaderProcess.class.getSimpleName(), leaderSessionID);
-
+		//todo  负责管理Dispatcher生命周期，同时提供了对JobGraph的任务恢复管理功能，无需恢复JobGraphStore中存储的JobGraph
+		// session模式， 如果基于ZK实现了集群的高可用，DispatcherLeaderProcess会将提交的JobGraph存储在ZK中，
+		// 当集群停止或者出现异常时就会通过DispatcherLeaderProcess对集群中的JobGraph进行恢复
 		final DispatcherLeaderProcess newDispatcherLeaderProcess = dispatcherLeaderProcessFactory.create(leaderSessionID);
 
 		forwardShutDownFuture(newDispatcherLeaderProcess);
@@ -188,6 +191,7 @@ public final class DefaultDispatcherRunner implements DispatcherRunner, LeaderCo
 	}
 
 	public static DispatcherRunner create(
+			//DefaultLeaderElectionService
 			LeaderElectionService leaderElectionService,
 			FatalErrorHandler fatalErrorHandler,
 			DispatcherLeaderProcessFactory dispatcherLeaderProcessFactory) throws Exception {

@@ -135,13 +135,14 @@ public abstract class RestServerEndpoint implements AutoCloseableAsync {
 	 */
 	public final void start() throws Exception {
 		synchronized (lock) {
+			//检查RestServerEndpoint.state是否为CREATED
 			Preconditions.checkState(state == State.CREATED, "The RestServerEndpoint cannot be restarted.");
 
 			log.info("Starting rest endpoint.");
 
 			final Router router = new Router();
 			final CompletableFuture<String> restAddressFuture = new CompletableFuture<>();
-
+			//todo 初始化各种Handler
 			handlers = initializeHandlers(restAddressFuture);
 
 			/* sort the handlers such that they are ordered the following:
@@ -156,6 +157,7 @@ public abstract class RestServerEndpoint implements AutoCloseableAsync {
 				RestHandlerUrlComparator.INSTANCE);
 
 			checkAllEndpointsAndHandlersAreUnique(handlers);
+			//注册Handler
 			handlers.forEach(handler -> registerHandler(router, handler, log));
 
 			ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {

@@ -63,6 +63,7 @@ final class DispatcherRunnerLeaderElectionLifecycleManager<T extends DispatcherR
 	}
 
 	public static <T extends DispatcherRunner & LeaderContender> DispatcherRunner createFor(T dispatcherRunner, LeaderElectionService leaderElectionService) throws Exception {
+		// dispatcherRunner = DefaultDispatcherRunner
 		//todo leaderElectionService = DefaultLeaderElectionService
 		return new DispatcherRunnerLeaderElectionLifecycleManager<>(dispatcherRunner, leaderElectionService);
 	}

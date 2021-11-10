@@ -4,12 +4,20 @@
     <list default="true" id="5fe55528-54ba-4e26-8dbb-01043205e359" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/wordcount/WorldCount3.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/wordcount/WorldCount3.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/api/reader/AbstractRecordReader.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/api/reader/AbstractRecordReader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/api/reader/RecordReader.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/api/reader/RecordReader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/partition/consumer/InputGate.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/partition/consumer/InputGate.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/AbstractDispatcherLeaderProcess.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/AbstractDispatcherLeaderProcess.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DefaultDispatcherGatewayServiceFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DefaultDispatcherGatewayServiceFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DefaultDispatcherRunner.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DefaultDispatcherRunner.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DefaultDispatcherRunnerFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DefaultDispatcherRunnerFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DispatcherRunnerLeaderElectionLifecycleManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/DispatcherRunnerLeaderElectionLifecycleManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/JobDispatcherLeaderProcess.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/dispatcher/runner/JobDispatcherLeaderProcess.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/entrypoint/ClusterEntrypoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/entrypoint/ClusterEntrypoint.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/entrypoint/component/DefaultDispatcherResourceManagerComponentFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/entrypoint/component/DefaultDispatcherResourceManagerComponentFactory.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/partition/consumer/SingleInputGate.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/io/network/partition/consumer/SingleInputGate.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/Task.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/taskmanager/Task.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/resourcemanager/ResourceManagerFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/resourcemanager/ResourceManagerFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/resourcemanager/active/ActiveResourceManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/resourcemanager/active/ActiveResourceManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/resourcemanager/active/ActiveResourceManagerFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/resourcemanager/active/ActiveResourceManagerFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/rest/RestServerEndpoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-runtime/src/main/java/org/apache/flink/runtime/rest/RestServerEndpoint.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flink-yarn/src/main/java/org/apache/flink/yarn/entrypoint/YarnResourceManagerFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/flink-yarn/src/main/java/org/apache/flink/yarn/entrypoint/YarnResourceManagerFactory.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -187,7 +195,8 @@
       <workItem from="1636192102377" duration="13316000" />
       <workItem from="1636248641772" duration="7134000" />
       <workItem from="1636269741353" duration="17024000" />
-      <workItem from="1636457033228" duration="2722000" />
+      <workItem from="1636457033228" duration="3012000" />
+      <workItem from="1636547303695" duration="3791000" />
     </task>
     <task id="LOCAL-00001" summary="comment">
       <created>1636207847053</created>
@@ -231,7 +240,21 @@
       <option name="project" value="LOCAL" />
       <updated>1636291202253</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="comment">
+      <created>1636459826748</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1636459826748</updated>
+    </task>
+    <task id="LOCAL-00008" summary="comment">
+      <created>1636459996324</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1636459996324</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

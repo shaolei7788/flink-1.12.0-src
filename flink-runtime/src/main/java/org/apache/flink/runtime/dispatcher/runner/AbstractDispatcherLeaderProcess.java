@@ -103,7 +103,7 @@ public abstract class AbstractDispatcherLeaderProcess implements DispatcherLeade
 	private void startInternal() {
 		log.info("Start {}.", getClass().getSimpleName());
 		state = State.RUNNING;
-		//todo
+		//todo JobDispatcherLeaderProcess#onStart
 		onStart();
 	}
 
@@ -179,6 +179,7 @@ public abstract class AbstractDispatcherLeaderProcess implements DispatcherLeade
 	private void completeDispatcherSetupInternal(DispatcherGatewayService createdDispatcherService) {
 		Preconditions.checkState(dispatcherService == null, "The DispatcherGatewayService can only be set once.");
 		dispatcherService = createdDispatcherService;
+		//获取createdDispatcherService.getGateway()
 		dispatcherGatewayFuture.complete(createdDispatcherService.getGateway());
 		FutureUtils.forward(createdDispatcherService.getShutDownFuture(), shutDownFuture);
 		handleUnexpectedDispatcherServiceTermination(createdDispatcherService);

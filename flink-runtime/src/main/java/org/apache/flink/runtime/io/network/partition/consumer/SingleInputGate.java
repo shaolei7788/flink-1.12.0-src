@@ -835,7 +835,6 @@ public class SingleInputGate extends IndexedInputGate {
 		queueChannel(checkNotNull(inputChannel), prioritySequenceNumber);
 	}
 
-
 	void triggerPartitionStateCheck(ResultPartitionID partitionId) {
 		partitionProducerStateProvider.requestPartitionProducerState(
 			consumedResultId,

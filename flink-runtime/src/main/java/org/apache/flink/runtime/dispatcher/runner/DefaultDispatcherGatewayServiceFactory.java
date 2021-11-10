@@ -72,7 +72,7 @@ class DefaultDispatcherGatewayServiceFactory implements AbstractDispatcherLeader
 
 		/*TODO 启动 Dispatcher，接着看 onStart()*/
 		dispatcher.start();
-
+		//将dispatcher封装在DefaultDispatcherGatewayService里
 		return DefaultDispatcherGatewayService.from(dispatcher);
 	}
 }

@@ -57,7 +57,7 @@ public abstract class ResourceManagerFactory<T extends ResourceIDRetrievable> {
 
 		final ResourceManagerMetricGroup resourceManagerMetricGroup = ResourceManagerMetricGroup.create(metricRegistry, hostname);
 		final SlotManagerMetricGroup slotManagerMetricGroup = SlotManagerMetricGroup.create(metricRegistry, hostname);
-
+		//todo
 		final ResourceManagerRuntimeServices resourceManagerRuntimeServices = createResourceManagerRuntimeServices(
 			configuration, rpcService, highAvailabilityServices, slotManagerMetricGroup);
 
@@ -93,7 +93,7 @@ public abstract class ResourceManagerFactory<T extends ResourceIDRetrievable> {
 			RpcService rpcService,
 			HighAvailabilityServices highAvailabilityServices,
 			SlotManagerMetricGroup slotManagerMetricGroup) throws ConfigurationException {
-
+		//todo
 		return ResourceManagerRuntimeServices.fromConfiguration(
 			createResourceManagerRuntimeServicesConfiguration(configuration),
 			highAvailabilityServices,

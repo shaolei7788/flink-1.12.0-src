@@ -280,7 +280,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			//todo 4 初始化 BlobServer 服务端  主要是管理一些大文件的上传，比如用户作业的jar包，TM上传log文件
 			blobServer = new BlobServer(configuration, haServices.createBlobStore());
 			blobServer.start();
-			//todo 5  初始化心跳服务组件, heartbeatServices = HeartbeatServices  用于提供心跳实例对象HeartBeatImpl
+			//todo 5  初始化心跳服务组件, heartbeatServices = HeartbeatServices  用于提供心跳实例对象HeartBeatImpl，主要用于集群组件之间的心跳检测
 			heartbeatServices = createHeartbeatServices(configuration);
 			//todo 6 初始化性能监控服务
 			metricRegistry = createMetricRegistry(configuration, pluginManager);
@@ -288,12 +288,12 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			metricRegistry.startQueryService(metricQueryServiceRpcService, null);
 
 			final String hostname = RpcUtils.getHostname(commonRpcService);
-
+			//创建processMetricGroup，用于监控集群系统指标
 			processMetricGroup = MetricUtils.instantiateProcessMetricGroup(
 				metricRegistry,
 				hostname,
 				ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
-			//todo 7 初始化一个用来存储 ExecutionGraph 的 Store, 实现是：FileArchivedExecutionGraphStore
+			//todo 7 初始化一个用来存储 ExecutionGraph, 实现是：FileArchivedExecutionGraphStore
 			archivedExecutionGraphStore = createSerializableExecutionGraphStore(configuration, commonRpcService.getScheduledExecutor());
 		}
 	}

@@ -47,12 +47,12 @@ public class JobDispatcherLeaderProcess extends AbstractDispatcherLeaderProcess 
 
 	@Override
 	protected void onStart() {
-		//todo DefaultDispatcherGatewayServiceFactory#create
+		//todo DefaultDispatcherGatewayServiceFactory#create 会创建dispatcher
 		final DispatcherGatewayService dispatcherService = dispatcherGatewayServiceFactory.create(
 			DispatcherId.fromUuid(getLeaderSessionId()),
 			Collections.singleton(jobGraph),
 			ThrowingJobGraphWriter.INSTANCE);
-		//todo
+		//todo 完成对dispatcher的后续设置
 		completeDispatcherSetup(dispatcherService);
 	}
 }

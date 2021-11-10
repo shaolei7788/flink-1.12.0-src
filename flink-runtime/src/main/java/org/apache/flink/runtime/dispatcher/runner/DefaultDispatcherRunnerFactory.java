@@ -47,7 +47,6 @@ public class DefaultDispatcherRunnerFactory implements DispatcherRunnerFactory {
 			Executor ioExecutor,
 			RpcService rpcService,
 			PartialDispatcherServices partialDispatcherServices) throws Exception {
-
 		final DispatcherLeaderProcessFactory dispatcherLeaderProcessFactory = dispatcherLeaderProcessFactoryFactory.createFactory(
 			jobGraphStoreFactory,
 			ioExecutor,

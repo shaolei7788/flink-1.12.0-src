@@ -46,7 +46,7 @@ public class YarnResourceManagerFactory extends ActiveResourceManagerFactory<Yar
 	@Override
 	protected ResourceManagerDriver<YarnWorkerNode> createResourceManagerDriver(Configuration configuration, String webInterfaceUrl, String rpcAddress) {
 		final YarnResourceManagerDriverConfiguration yarnResourceManagerDriverConfiguration = new YarnResourceManagerDriverConfiguration(System.getenv(), rpcAddress, webInterfaceUrl);
-
+		//todo
 		return new YarnResourceManagerDriver(
 			configuration,
 			yarnResourceManagerDriverConfiguration,
