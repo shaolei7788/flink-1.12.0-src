@@ -56,14 +56,13 @@ public class ResourceManagerRuntimeServices {
 			HighAvailabilityServices highAvailabilityServices,
 			ScheduledExecutor scheduledExecutor,
 			SlotManagerMetricGroup slotManagerMetricGroup) {
-
+		//todo 创建SlotManager 管理和分配slot
 		final SlotManager slotManager = createSlotManager(configuration, scheduledExecutor, slotManagerMetricGroup);
-
+		//todo 实时监听JobManager的运行状况，获取集群启动的作业对应的JobLeaderId信息
 		final JobLeaderIdService jobLeaderIdService = new JobLeaderIdService(
 			highAvailabilityServices,
 			scheduledExecutor,
 			configuration.getJobTimeout());
-
 		return new ResourceManagerRuntimeServices(slotManager, jobLeaderIdService);
 	}
 

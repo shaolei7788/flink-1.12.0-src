@@ -242,7 +242,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			// 	 1 启动心跳服务：TaskManager、JobMaster
 			// 	 2 启动slotManager
 			leaderElectionService.start(this);
-
+			//用于管理注册的JobMaster,包括对JobMaster的注册和注销
 			jobLeaderIdService.start(new JobLeaderIdActionsImpl());
 			// 注册TaskExecutor Metrics
 			registerTaskExecutorMetrics();

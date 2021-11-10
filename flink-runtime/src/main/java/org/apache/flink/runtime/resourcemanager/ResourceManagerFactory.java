@@ -93,7 +93,7 @@ public abstract class ResourceManagerFactory<T extends ResourceIDRetrievable> {
 			RpcService rpcService,
 			HighAvailabilityServices highAvailabilityServices,
 			SlotManagerMetricGroup slotManagerMetricGroup) throws ConfigurationException {
-		//todo
+		//todo 创建ResourceManagerRuntimeServices 里面创建了 SlotManager 跟 JobLeaderIdService
 		return ResourceManagerRuntimeServices.fromConfiguration(
 			createResourceManagerRuntimeServicesConfiguration(configuration),
 			highAvailabilityServices,
