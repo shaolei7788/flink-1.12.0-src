@@ -588,7 +588,6 @@ public class StreamGraph implements Pipeline {
 			if (shuffleMode == null) {
 				shuffleMode = ShuffleMode.UNDEFINED;
 			}
-
 			/*TODO 创建 StreamEdge*/
 			StreamEdge edge = new StreamEdge(upstreamNode, downstreamNode, typeNumber,
 				partitioner, outputTag, shuffleMode);
