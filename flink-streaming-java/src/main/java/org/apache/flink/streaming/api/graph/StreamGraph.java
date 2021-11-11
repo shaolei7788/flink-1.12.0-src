@@ -575,7 +575,6 @@ public class StreamGraph implements Pipeline {
 			} else if (partitioner == null) {
 				partitioner = new RebalancePartitioner<Object>();
 			}
-
 			// 健康检查，forward 分区必须要上下游的并发度一致
 			if (partitioner instanceof ForwardPartitioner) {
 				if (upstreamNode.getParallelism() != downstreamNode.getParallelism()) {
