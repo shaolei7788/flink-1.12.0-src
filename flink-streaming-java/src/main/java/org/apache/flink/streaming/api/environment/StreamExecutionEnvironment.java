@@ -2226,6 +2226,7 @@ public class StreamExecutionEnvironment {
 	 */
 	@Internal
 	public void addOperator(Transformation<?> transformation) {
+		// transformation = OneInputTransformation
 		Preconditions.checkNotNull(transformation, "transformation must not be null.");
 		//添加addOperator
 		this.transformations.add(transformation);

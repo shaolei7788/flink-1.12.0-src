@@ -1074,7 +1074,6 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	private void startServicesOnLeadership() {
 		/*TODO 启动心跳服务：TaskManager、JobMaster*/
 		startHeartbeatServices();
-
 		/*TODO 启动slotManager*/
 		// SlotManagerImpl#start
 		slotManager.start(getFencingToken(), getMainThreadExecutor(), new ResourceActionsImpl());

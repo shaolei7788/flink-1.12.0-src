@@ -78,7 +78,7 @@ public class LegacySinkTransformationTranslator<IN>
 				parentTransformations.size() == 1,
 				"Expected exactly one input transformation but found " + parentTransformations.size());
 		final Transformation<?> input = parentTransformations.get(0);
-
+		//todo addSink 会创建StreamNode
 		streamGraph.addSink(
 				transformationId,
 				slotSharingGroup,

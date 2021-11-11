@@ -622,8 +622,7 @@ public class StreamGraphGenerator {
 						.flatMap(Collection::stream)
 						.collect(Collectors.toList()));
 
-		final TransformationTranslator.Context context = new ContextImpl(
-				this, streamGraph, slotSharingGroup, configuration);
+		final TransformationTranslator.Context context = new ContextImpl(this, streamGraph, slotSharingGroup, configuration);
 
 		return shouldExecuteInBatchMode
 				//转换批

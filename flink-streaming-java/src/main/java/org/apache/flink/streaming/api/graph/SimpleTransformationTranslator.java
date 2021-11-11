@@ -43,8 +43,7 @@ public abstract class SimpleTransformationTranslator<OUT, T extends Transformati
 		checkNotNull(transformation);
 		checkNotNull(context);
 
-		final Collection<Integer> transformedIds =
-				translateForBatchInternal(transformation, context);
+		final Collection<Integer> transformedIds = translateForBatchInternal(transformation, context);
 		configure(transformation, context);
 
 		return transformedIds;
@@ -52,6 +51,7 @@ public abstract class SimpleTransformationTranslator<OUT, T extends Transformati
 
 	@Override
 	public Collection<Integer> translateForStreaming(final T transformation, final Context context) {
+		//context = TransformationTranslator.Context
 		checkNotNull(transformation);
 		checkNotNull(context);
 

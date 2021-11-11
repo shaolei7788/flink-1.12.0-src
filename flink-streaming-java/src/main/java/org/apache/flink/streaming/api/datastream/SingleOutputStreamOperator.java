@@ -57,6 +57,7 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	private Map<OutputTag<?>, TypeInformation<?>> requestedSideOutputs = new HashMap<>();
 
 	protected SingleOutputStreamOperator(StreamExecutionEnvironment environment, Transformation<T> transformation) {
+		// transformation = LegacySourceTransformation
 		super(environment, transformation);
 	}
 
