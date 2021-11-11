@@ -585,7 +585,6 @@ public class StreamGraph implements Pipeline {
 							" You must use another partitioning strategy, such as broadcast, rebalance, shuffle or global.");
 				}
 			}
-
 			if (shuffleMode == null) {
 				shuffleMode = ShuffleMode.UNDEFINED;
 			}
