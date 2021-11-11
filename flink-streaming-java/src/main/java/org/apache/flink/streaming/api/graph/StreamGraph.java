@@ -600,6 +600,7 @@ public class StreamGraph implements Pipeline {
 		}
 	}
 
+
 	public void setParallelism(Integer vertexID, int parallelism) {
 		if (getStreamNode(vertexID) != null) {
 			getStreamNode(vertexID).setParallelism(parallelism);

@@ -14,6 +14,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="flink-datastream-allround-test" />
         <module name="flink-connector-gcp-pubsub_2.11" />
+        <module name="flink-examples-streaming-twitter_2.11" />
         <module name="flink-streaming-kinesis-test_2.11" />
         <module name="flink-scala_2.11" />
         <module name="flink-queryable-state-runtime_2.11" />
@@ -37,6 +38,7 @@
         <module name="flink-core" />
         <module name="flink-csv" />
         <module name="flink-yarn-tests" />
+        <module name="flink-sql-connector-elasticsearch7_2.11" />
         <module name="flink-quickstart-scala" />
         <module name="flink-cli-test_2.11" />
         <module name="flink-confluent-schema-registry" />
@@ -51,14 +53,15 @@
         <module name="flink-ml-api" />
         <module name="flink-orc_2.11" />
         <module name="flink-sql-avro-confluent-registry" />
+        <module name="flink-python-test_2.11" />
         <module name="flink-metrics-core" />
         <module name="flink-connector-hbase-base_2.11" />
-        <module name="flink-sql-parquet_2.11" />
         <module name="flink-sql-connector-kinesis_2.11" />
         <module name="flink-connector-hbase-2.2_2.11" />
         <module name="flink-connector-twitter_2.11" />
         <module name="flink-sql-connector-hive-2.3.6_2.11" />
         <module name="flink-streaming-kafka-test_2.11" />
+        <module name="flink-examples-streaming_2.11" />
         <module name="flink-metrics-slf4j" />
         <module name="flink-sql-connector-hive-3.1.2_2.11" />
         <module name="flink-metrics-jmx_2.11" />
@@ -77,7 +80,6 @@
         <module name="flink-s3-fs-presto" />
         <module name="flink-connector-elasticsearch5_2.11" />
         <module name="flink-table-common" />
-        <module name="flink-rocksdb-state-memory-control-test" />
         <module name="flink-dataset-allround-test" />
         <module name="force-shading" />
         <module name="flink-batch-sql-test_2.11" />
@@ -108,7 +110,6 @@
         <module name="flink-connector-files" />
         <module name="flink-high-parallelism-iterations-test" />
         <module name="flink-heavy-deployment-stress-test" />
-        <module name="flink-statebackend-heap-spillable_2.11" />
         <module name="flink-connector-elasticsearch7_2.11" />
         <module name="flink-statebackend-rocksdb_2.11" />
         <module name="flink-walkthrough-datastream-java" />
@@ -124,7 +125,6 @@
         <module name="flink-metrics-datadog" />
         <module name="flink-container_2.11" />
         <module name="flink-fs-tests" />
-        <module name="flink-compress" />
         <module name="flink-examples-streaming-gcp-pubsub_2.11" />
         <module name="flink-hcatalog_2.11" />
         <module name="flink-test-utils-junit" />
@@ -138,20 +138,20 @@
         <module name="flink-table-api-java-bridge_2.11" />
         <module name="flink-tpch-test" />
         <module name="flink-avro" />
-        <module name="flink-metrics-dropwizard" />
         <module name="flink-queryable-state-client-java" />
+        <module name="flink-sql-connector-hbase-2.2_2.11" />
+        <module name="flink-parent-child-classloading-test-program_2.11" />
         <module name="flink-connector-kinesis_2.11" />
         <module name="flink-local-recovery-and-allocation-test" />
-        <module name="flink-parent-child-classloading-test-program_2.11" />
+        <module name="flink-rocksdb-state-memory-control-test" />
         <module name="flink-azure-fs-hadoop" />
         <module name="flink-file-sink-common" />
         <module name="flink-ml-lib_2.11" />
         <module name="flink-mesos_2.11" />
-        <module name="flink-connector-test-utils" />
         <module name="flink-tests" />
         <module name="flink-end-to-end-tests-common" />
         <module name="flink-metrics-statsd" />
-        <module name="flink-python-test_2.11" />
+        <module name="flink-sql-parquet_2.11" />
         <module name="flink-table-api-scala-bridge_2.11" />
         <module name="flink-table-planner-blink_2.11" />
         <module name="flink-elasticsearch5-test" />
@@ -161,8 +161,8 @@
         <module name="flink-state-processor-api_2.11" />
         <module name="flink-s3-fs-base" />
         <module name="flink-connector-base" />
-        <module name="flink-examples-streaming_2.11" />
-        <module name="flink-sql-connector-hbase-2.2_2.11" />
+        <module name="flink-compress" />
+        <module name="flink-statebackend-heap-spillable_2.11" />
         <module name="flink-sql-parser-hive" />
         <module name="flink-stream-sql-test_2.11" />
         <module name="flink-sql-client-test" />
@@ -170,14 +170,14 @@
         <module name="another-dummy-fs" />
         <module name="flink-table-runtime-blink_2.11" />
         <module name="java-ci-tools" />
-        <module name="flink-examples-streaming-twitter_2.11" />
+        <module name="flink-metrics-dropwizard" />
         <module name="flink-netty-shuffle-memory-control-test" />
         <module name="flink-connector-jdbc_2.11" />
         <module name="flink-sql-client_2.11" />
         <module name="flink-streaming-java_2.11" />
         <module name="flink-elasticsearch6-test" />
         <module name="flink-tpcds-test" />
-        <module name="flink-sql-connector-elasticsearch7_2.11" />
+        <module name="flink-connector-test-utils" />
       </profile>
     </annotationProcessing>
   </component>
